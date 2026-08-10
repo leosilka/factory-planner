@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Contratos — Cadeia de Produção</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue-deep:#0A1F38;
+    --blue-panel:#0F2C4D;
+    --blue-panel-2:#123458;
+    --blue-line: rgba(160,196,240,0.14);
+    --blue-line-strong: rgba(160,196,240,0.28);
+    --ink:#E7EEF7;
+    --ink-dim:#8FA8C7;
+    --amber:#E8983A;
+    --amber-dim:#B97429;
+    --green:#6FCF97;
+    --red:#E2725B;
+    --yellow:#E0C349;
+    --gray:#9AA7B8;
+  }
+  *{box-sizing:border-box;}
+  html,body{background:var(--blue-deep);}
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    background-image:
+      linear-gradient(var(--blue-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--blue-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: fixed;
+    min-height:100vh;
+  }
+  .font-display{ font-family:'Rajdhani', sans-serif; letter-spacing:0.02em; }
+  .font-mono{ font-family:'IBM Plex Mono', monospace; }
+
+  .blueprint-panel{
+    position:relative;
+    background: linear-gradient(180deg, var(--blue-panel), var(--blue-panel-2));
+    border: 1px solid var(--blue-line-strong);
+  }
+
+  .corners{ position:relative; }
+  .corners::before, .corners::after{
+    content:'';
+    position:absolute;
+    width:16px; height:16px;
+    pointer-events:none;
+  }
+  .corners::before{
+    top:-1px; left:-1px;
+    border-top:2px solid var(--amber);
+    border-left:2px solid var(--amber);
+  }
+  .corners::after{
+    bottom:-1px; right:-1px;
+    border-bottom:2px solid var(--amber);
+    border-right:2px solid var(--amber);
+  }
+
+  .stamp-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--ink-dim);
+  }
+
+  select, input[type="number"], input[type="text"]{
+    background: rgba(6,20,38,0.55);
+    border: 1px solid var(--blue-line-strong);
+    color: var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  select:focus, input:focus{
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 1px var(--amber-dim);
+  }
+  select option { background: var(--blue-panel); color: var(--ink); }
+  input:disabled, button:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  .btn-amber{
+    background: var(--amber);
+    color: #17110A;
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    letter-spacing:0.04em;
+    transition: filter 0.15s ease, transform 0.1s ease;
+  }
+  .btn-amber:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn-amber:active:not(:disabled){ transform: translateY(1px); }
+
+  .btn-ghost{
+    background: transparent;
+    border: 1px solid var(--blue-line-strong);
+    color: var(--ink-dim);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-ghost:hover:not(:disabled){ border-color: var(--amber-dim); color: var(--ink); }
+
+  .btn-mini{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:4px;
+    border:1px solid var(--blue-line-strong);
+    color: var(--ink-dim);
+    transition: all 0.15s ease;
+  }
+  .btn-mini:hover{ color:var(--ink); }
+  .btn-mini.mini-green:hover{ border-color: var(--green); color: var(--green); }
+  .btn-mini.mini-red:hover{ border-color: var(--red); color: var(--red); }
+
+  .row-remove{
+    color: var(--red);
+    opacity:0.65;
+    transition: opacity 0.15s ease;
+  }
+  .row-remove:hover{ opacity:1; }
+
+  .divider-dash{
+    border-top: 1px dashed var(--blue-line-strong);
+  }
+
+  .scroll-thin::-webkit-scrollbar{ width:6px; height:6px; }
+  .scroll-thin::-webkit-scrollbar-thumb{ background: var(--blue-line-strong); border-radius:3px; }
+  .scroll-thin::-webkit-scrollbar-track{ background: transparent; }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(6px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  .fade-up{ animation: fadeUp 0.35s ease both; }
+
+  .machine-bar{
+    height:6px;
+    background: rgba(232,152,58,0.15);
+    position:relative;
+    overflow:hidden;
+    border-radius:2px;
+  }
+  .machine-bar > span{
+    display:block;
+    height:100%;
+    background: var(--amber);
+    border-radius:2px;
+    transition: width 0.5s ease;
+  }
+
+  .tab-btn{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    letter-spacing:0.03em;
+    font-size:14px;
+    padding:8px 4px;
+    color: var(--ink-dim);
+    border-bottom:2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    white-space:nowrap;
+  }
+  .tab-btn.active{
+    color: var(--ink);
+    border-color: var(--amber);
+  }
+
+  .badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.03em;
+    padding:2px 8px;
+    border-radius:999px;
+    display:inline-block;
+    white-space:nowrap;
+  }
+  .badge-green{ background: rgba(111,207,151,0.16); color: var(--green); border:1px solid rgba(111,207,151,0.4); }
+  .badge-yellow{ background: rgba(224,195,73,0.16); color: var(--yellow); border:1px solid rgba(224,195,73,0.4); }
+  .badge-red{ background: rgba(226,114,91,0.16); color: var(--red); border:1px solid rgba(226,114,91,0.4); }
+  .badge-gray{ background: rgba(154,167,184,0.14); color: var(--gray); border:1px solid rgba(154,167,184,0.35); }
+  .badge-stage{
+    background: rgba(232,152,58,0.14); color: var(--amber); border:1px solid rgba(232,152,58,0.45);
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:13px; letter-spacing:0.03em;
+    padding:3px 12px; border-radius:4px;
+  }
+
+  .stage-block{ position:relative; padding-left:18px; }
+  .stage-block::before{
+    content:''; position:absolute; left:5px; top:26px; bottom:-8px; width:1px;
+    background: var(--blue-line-strong);
+  }
+  .stage-block:last-child::before{ display:none; }
+  .stage-dot{
+    position:absolute; left:0; top:4px; width:11px; height:11px; border-radius:50%;
+    background: var(--amber); box-shadow:0 0 0 3px rgba(232,152,58,0.18);
+  }
+
+  .recipe-card{
+    border:1px solid var(--blue-line-strong);
+    border-radius:6px;
+    padding:10px 12px;
+    background: rgba(6,20,38,0.25);
+  }
+  .recipe-arrow{ color: var(--ink-dim); }
+
+  .modal-overlay{
+    position:fixed; inset:0; background: rgba(5,14,26,0.72);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    z-index:50;
+  }
+  .modal-box{
+    max-width:380px; width:100%;
+  }
+
+  .report-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .report-table th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--ink-dim);
+    padding:6px 8px;
+    border-bottom:1px solid var(--blue-line-strong);
+  }
+  .report-table td{
+    padding:7px 8px;
+    border-bottom:1px solid var(--blue-line);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .report-table tr:hover td{ background: rgba(160,196,240,0.04); }
+
+  .flash-msg{ transition: opacity 0.4s ease; }
+
+  .contract-card{
+    border:1px solid var(--blue-line-strong);
+    border-radius:6px;
+    padding:12px 14px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .fade-up{ animation:none; }
+    .machine-bar > span{ transition:none; }
+  }
+</style>
+</head>
+<body class="pb-24">
+
+  <!-- Datalist dinâmicos -->
+  <datalist id="machineListOptions">
+    <option value="Triturador de Pedra">
+    <option value="Prensa de Moldagem">
+    <option value="Forno de Fundição">
+    <option value="Estação de Fabricação">
+    <option value="Refinaria">
+    <option value="Oficina de Precisão">
+  </datalist>
+  <datalist id="allIngredientsList"></datalist>
+
+  <!-- Header / title block -->
+  <header class="max-w-6xl mx-auto px-6 pt-10 pb-6">
+    <div class="blueprint-panel corners px-6 py-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <div>
+        <p class="stamp-label mb-1">Fábrica // Planejamento de Produção</p>
+        <h1 class="font-display text-3xl sm:text-4xl font-700 text-white tracking-wide">PAINEL DE CONTRATOS</h1>
+      </div>
+      <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed sm:text-right">
+        <div>REV. 05 — CADEIA E RECEITAS DINÂMICAS</div>
+        <div id="recipeCount">— receitas carregadas</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- Left column: tabs -->
+    <section class="lg:col-span-2">
+      <div class="blueprint-panel corners p-5 sticky top-6">
+
+        <div class="flex gap-4 mb-4 border-b border-[var(--blue-line)] overflow-x-auto scroll-thin">
+          <button id="tabContratoBtn" class="tab-btn active">Contrato</button>
+          <button id="tabEstoqueBtn" class="tab-btn">Estoque</button>
+          <button id="tabReceitasBtn" class="tab-btn">Receitas</button>
+          <button id="tabContratosBtn" class="tab-btn">Histórico <span id="contratosAndamentoCount" class="font-mono text-[10px]"></span></button>
+        </div>
+
+        <!-- Painel: Contrato -->
+        <div id="tabContrato">
+          <p class="stamp-label mb-1">Etapa 01</p>
+          <h2 class="font-display text-xl font-600 text-white mb-4">Itens do Contrato</h2>
+
+          <div id="rows" class="space-y-2 max-h-[38vh] overflow-y-auto scroll-thin pr-1"></div>
+
+          <button id="addRow" class="btn-ghost mt-3 w-full py-2 rounded text-sm font-mono flex items-center justify-center gap-2">
+            <span class="text-lg leading-none">+</span> Adicionar item
+          </button>
+
+          <div class="divider-dash my-5"></div>
+
+          <button id="calcBtn" class="btn-amber w-full py-3 rounded text-base uppercase">
+            Calcular Contrato
+          </button>
+          <p id="emptyWarning" class="font-mono text-xs text-[var(--red)] mt-2 hidden">Adicione ao menos um item válido para calcular.</p>
+
+          <div class="divider-dash my-5"></div>
+
+          <p class="stamp-label mb-2">Etapa 02</p>
+          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Número do Contrato</label>
+          <input id="contractNumberInput" type="text" placeholder="ex: CT-2026-014" class="w-full rounded px-3 py-2 text-sm mb-2" disabled />
+          <button id="launchContractBtn" class="btn-amber w-full py-3 rounded text-base uppercase" disabled>
+            Lançar Contrato
+          </button>
+          <p class="font-mono text-[11px] text-[var(--ink-dim)] mt-2">Calcule o contrato antes de lançar. Ao lançar, o estoque disponível é deduzido e o contrato entra "Em Andamento".</p>
+          <p id="launchWarning" class="font-mono text-xs text-[var(--red)] mt-2 hidden"></p>
+        </div>
+
+        <!-- Painel: Estoque -->
+        <div id="tabEstoque" class="hidden">
+          <p class="stamp-label mb-1">Depósito</p>
+          <h2 class="font-display text-xl font-600 text-white mb-1">Estoque Atual</h2>
+          <p class="font-mono text-xs text-[var(--ink-dim)] mb-3">Quantidades salvas automaticamente no navegador.</p>
+
+          <input id="stockSearch" type="text" placeholder="Buscar item..." class="w-full rounded px-3 py-2 text-sm mb-3" />
+
+          <div id="stockList" class="space-y-1.5 max-h-[38vh] overflow-y-auto scroll-thin pr-1"></div>
+
+          <div class="divider-dash my-4"></div>
+
+          <p class="stamp-label mb-2">Novo Item</p>
+          <div class="flex items-center gap-2 mb-1">
+            <input id="customItemInput" type="text" placeholder="Nome do item (ex: Fio de Ouro)" class="flex-1 min-w-0 rounded px-3 py-2 text-sm" />
+            <button id="addCustomItemBtn" class="btn-ghost px-3 py-2 rounded text-sm font-mono shrink-0">+ Adicionar</button>
+          </div>
+          <p class="font-mono text-[11px] text-[var(--ink-dim)] mb-3">Para itens sem receita cadastrada que você só quer controlar no estoque.</p>
+          <p id="customItemWarning" class="font-mono text-xs text-[var(--red)] mb-3 hidden"></p>
+
+          <div class="divider-dash my-4"></div>
+          <div class="flex items-center gap-3">
+            <button id="clearStockBtn" class="btn-ghost flex-1 py-2 rounded text-sm font-mono">Zerar Estoque</button>
+            <span id="stockSavedFlash" class="flash-msg font-mono text-xs text-[var(--green)] opacity-0">Estoque salvo ✓</span>
+          </div>
+        </div>
+
+        <!-- Painel: Novas Receitas -->
+        <div id="tabReceitas" class="hidden">
+          <p class="stamp-label mb-1">Engenharia</p>
+          <h2 class="font-display text-xl font-600 text-white mb-4">Cadastrar Receita</h2>
+
+          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Nome do Item Resultante</label>
+          <input id="recipeNameInput" type="text" placeholder="Ex: Placa de Titânio" class="w-full rounded px-3 py-2 text-sm mb-3" />
+
+          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Máquina Utilizada</label>
+          <input id="recipeMachineInput" type="text" list="machineListOptions" placeholder="Ex: Estação de Fabricação" class="w-full rounded px-3 py-2 text-sm mb-4" />
+
+          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Ingredientes (Custo por unidade)</label>
+          <div id="recipeIngredients" class="space-y-2 mb-3 max-h-[20vh] overflow-y-auto scroll-thin pr-1"></div>
+          
+          <button id="addIngredientBtn" class="btn-ghost w-full py-2 rounded text-sm font-mono flex items-center justify-center gap-2 mb-4">
+            <span class="text-lg leading-none">+</span> Adicionar Ingrediente
+          </button>
+
+          <p id="recipeWarning" class="font-mono text-xs text-[var(--red)] mb-3 hidden"></p>
+
+          <button id="saveRecipeBtn" class="btn-amber w-full py-3 rounded text-base uppercase">
+            Salvar Receita
+          </button>
+
+          <div class="divider-dash my-5"></div>
+          
+          <div class="flex items-center justify-between mb-2">
+            <p class="stamp-label">Receitas Personalizadas</p>
+            <span id="customRecipeCount" class="font-mono text-xs text-[var(--amber)]"></span>
+          </div>
+          <div id="customRecipesList" class="space-y-2 max-h-[25vh] overflow-y-auto scroll-thin pr-1"></div>
+          <p id="customRecipesEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Nenhuma receita personalizada cadastrada.</p>
+        </div>
+
+        <!-- Painel: Contratos lançados -->
+        <div id="tabContratos" class="hidden">
+          <p class="stamp-label mb-1">Histórico</p>
+          <h2 class="font-display text-xl font-600 text-white mb-3">Contratos Lançados</h2>
+          <div id="contractsList" class="space-y-3 max-h-[52vh] overflow-y-auto scroll-thin pr-1"></div>
+          <p id="contractsEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Nenhum contrato lançado ainda.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="lg:col-span-3 space-y-6">
+
+      <!-- Report table -->
+      <div class="blueprint-panel corners p-5">
+        <p class="stamp-label mb-1">Resultado A</p>
+        <h2 class="font-display text-xl font-600 text-white mb-3">Relatório do Contrato</h2>
+        <div class="overflow-x-auto scroll-thin">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Necessário</th>
+                <th>Possui no Estoque</th>
+                <th>Falta Produzir / Coletar</th>
+              </tr>
+            </thead>
+            <tbody id="reportBody"></tbody>
+          </table>
+        </div>
+        <p id="reportEmpty" class="font-mono text-sm text-[var(--ink-dim)] mt-2">Ainda não calculado.</p>
+      </div>
+
+      <!-- Raw materials -->
+      <div class="blueprint-panel corners p-5">
+        <p class="stamp-label mb-1">Resultado B</p>
+        <h2 class="font-display text-xl font-600 text-white mb-3">Matérias-Primas Brutas a Coletar</h2>
+        <div id="rawList" class="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-sm"></div>
+        <p id="rawEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Ainda não calculado.</p>
+      </div>
+
+      <!-- Etapas de Produção -->
+      <div class="blueprint-panel corners p-5">
+        <p class="stamp-label mb-1">Resultado C</p>
+        <h2 class="font-display text-xl font-600 text-white mb-1">Etapas de Produção</h2>
+        <p class="font-mono text-xs text-[var(--ink-dim)] mb-4">Ordem de fabricação: comece pela Etapa 1 (usa só matéria-prima) e siga até o item final.</p>
+        <div id="stagesList" class="space-y-6"></div>
+        <p id="interEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Ainda não calculado.</p>
+      </div>
+
+      <!-- Machine usage -->
+      <div class="blueprint-panel corners p-5">
+        <p class="stamp-label mb-1">Resultado D</p>
+        <h2 class="font-display text-xl font-600 text-white mb-3">Processamentos por Máquina</h2>
+        <div id="machineList" class="space-y-4"></div>
+        <p id="machineEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Ainda não calculado.</p>
+      </div>
+
+    </section>
+  </main>
+
+<script>
+/* ---------- Dados das receitas base ---------- */
+const DEFAULT_RECEITAS = [
+  { "item": "Bloco de Argila", "maquina": "Triturador de Pedra", "custo": [{ "item": "Argila", "quantidade": 2 }] },
+  { "item": "Carvão Triturado", "maquina": "Triturador de Pedra", "custo": [{ "item": "Carvão", "quantidade": 2 }] },
+  { "item": "Bloco de Calcário", "maquina": "Triturador de Pedra", "custo": [{ "item": "Calcário", "quantidade": 2 }] },
+  { "item": "Cimento", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Bloco de Calcário", "quantidade": 2 }] },
+  { "item": "Tijolo de Concreto", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Cimento", "quantidade": 2 }] },
+  { "item": "Areia", "maquina": "Triturador de Pedra", "custo": [{ "item": "Arenito", "quantidade": 2 }] },
+  { "item": "Vidro Espumado", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Areia", "quantidade": 2 }] },
+  { "item": "Bloco de Pedra", "maquina": "Triturador de Pedra", "custo": [{ "item": "Pedra", "quantidade": 2 }] },
+  { "item": "Tijolo de Pedra", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Bloco de Pedra", "quantidade": 2 }] },
+  { "item": "Lápide", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Bloco de Pedra", "quantidade": 4 }] },
+  { "item": "Tijolo de Argila", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Bloco de Argila", "quantidade": 2 }] },
+  { "item": "Vidro", "maquina": "Forno de Fundição", "custo": [{ "item": "Areia", "quantidade": 2 }] },
+  { "item": "Lingote de Bronze", "maquina": "Forno de Fundição", "custo": [{ "item": "Bronze", "quantidade": 2 }, { "item": "Carvão Triturado", "quantidade": 1 }] },
+  { "item": "Lingote de Cobre", "maquina": "Forno de Fundição", "custo": [{ "item": "Cobre", "quantidade": 2 }] },
+  { "item": "Lingote de Ferro", "maquina": "Forno de Fundição", "custo": [{ "item": "Ferro", "quantidade": 2 }] },
+  { "item": "Lingote de Aço", "maquina": "Forno de Fundição", "custo": [{ "item": "Aço", "quantidade": 2 }, { "item": "Carvão Triturado", "quantidade": 1 }] },
+  { "item": "Chapa Bimetálica", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Cobre", "quantidade": 1 }, { "item": "Lingote de Ferro", "quantidade": 1 }] },
+  { "item": "Engrenagens de Bronze", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Bronze", "quantidade": 2 }] },
+  { "item": "Fio de Cobre", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Cobre", "quantidade": 2 }] },
+  { "item": "Tubos de Aquecimento", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Cobre", "quantidade": 2 }, { "item": "Lingote de Bronze", "quantidade": 2 }] },
+  { "item": "Prego de Ferro", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Ferro", "quantidade": 1 }] },
+  { "item": "Barra de Ferro", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Ferro", "quantidade": 3 }] },
+  { "item": "Barras de Aço", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Aço", "quantidade": 2 }, { "item": "Lingote de Ferro", "quantidade": 2 }] },
+  { "item": "Viga de Aço", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Aço", "quantidade": 4 }] },
+  { "item": "Placa de Aço", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Aço", "quantidade": 2 }] },
+  { "item": "Placa de Ferro", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Ferro", "quantidade": 2 }] },
+  { "item": "Placa de Cobre", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Cobre", "quantidade": 2 }] },
+  { "item": "Ingot de Ouro", "maquina": "Refinaria", "custo": [{ "item": "Ouro", "quantidade": 2 }] },
+  { "item": "Ingot de Prata", "maquina": "Refinaria", "custo": [{ "item": "Prata", "quantidade": 2 }] },
+  { "item": "Ingot de Titânio", "maquina": "Refinaria", "custo": [{ "item": "Titânio", "quantidade": 2 }, { "item": "Carvão Triturado", "quantidade": 1 }] },
+  { "item": "Diamante Industrial", "maquina": "Refinaria", "custo": [{ "item": "Diamante", "quantidade": 2 }] },
+  { "item": "Roda de Corte de Diamante", "maquina": "Oficina de Precisão", "custo": [{ "item": "Diamante Industrial", "quantidade": 2 }, { "item": "Placa de Aço", "quantidade": 2 }] },
+  { "item": "Pinos Conectores de Ouro", "maquina": "Oficina de Precisão", "custo": [{ "item": "Ingot de Ouro", "quantidade": 2 }] },
+  { "item": "Vaso Sinatário Banhado a Ouro", "maquina": "Refinaria", "custo": [{ "item": "Ingot de Ouro", "quantidade": 3 }] },
+  { "item": "Painel de Isolamento", "maquina": "Oficina de Precisão", "custo": [{ "item": "Ingot de Prata", "quantidade": 2 }] },
+  { "item": "Rolamento de Prata", "maquina": "Oficina de Precisão", "custo": [{ "item": "Ingot de Prata", "quantidade": 2 }, { "item": "Lingote de Ferro", "quantidade": 1 }] },
+  { "item": "Cofre de Aço", "maquina": "Oficina de Precisão", "custo": [{ "item": "Ingot de Prata", "quantidade": 1 }, { "item": "Lingote de Aço", "quantidade": 2 }] },
+  { "item": "Tubo de Titânio", "maquina": "Oficina de Precisão", "custo": [{ "item": "Ingot de Titânio", "quantidade": 4 }] },
+  { "item": "Válvula", "maquina": "Oficina de Precisão", "custo": [{ "item": "Ingot de Ouro", "quantidade": 2 }, { "item": "Lingote de Bronze", "quantidade": 1 }] }
+];
+
+/* ---------- Estado Dinâmico e Índices ---------- */
+const CUSTOM_RECIPES_KEY = 'fabrica_receitas_v1';
+const CUSTOM_ITEMS_KEY = 'fabrica_itens_personalizados_v1';
+const STOCK_KEY = 'fabrica_estoque_v1';
+const CONTRACTS_KEY = 'fabrica_contratos_v1';
+
+let CUSTOM_RECIPES = loadCustomRecipes();
+let CUSTOM_ITEMS = loadCustomItems();
+let STOCK = loadStock();
+let CONTRACTS = loadContracts();
+
+let ALL_RECEITAS = [];
+let RECIPE_MAP = {};
+let CRAFTABLE_ITEMS = [];
+let RAW_ITEMS = [];
+let STAGE_MAP = {};
+
+function initData() {
+  ALL_RECEITAS = [...DEFAULT_RECEITAS, ...CUSTOM_RECIPES];
+  
+  RECIPE_MAP = {};
+  ALL_RECEITAS.forEach(r => { RECIPE_MAP[r.item] = r; });
+  CRAFTABLE_ITEMS = ALL_RECEITAS.map(r => r.item).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+
+  const rawSet = new Set();
+  ALL_RECEITAS.forEach(r => r.custo.forEach(c => { if (!RECIPE_MAP[c.item]) rawSet.add(c.item); }));
+  RAW_ITEMS = [...rawSet].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+
+  STAGE_MAP = {};
+  CRAFTABLE_ITEMS.forEach(item => computeStage(item, new Set()));
+
+  document.getElementById('recipeCount').textContent = `${ALL_RECEITAS.length} RECEITAS CARREGADAS`;
+
+  updateDatalist();
+  updateContractSelects();
+  renderCustomRecipesList();
+  
+  const searchVal = document.getElementById('stockSearch') ? document.getElementById('stockSearch').value : '';
+  if(document.getElementById('stockList')) renderStockList(searchVal);
+}
+
+function updateDatalist() {
+  const datalist = document.getElementById('allIngredientsList');
+  if(!datalist) return;
+  const allKnown = getAllStockItems();
+  datalist.innerHTML = allKnown.map(item => `<option value="${item}">`).join('');
+}
+
+function updateContractSelects() {
+  const selects = document.querySelectorAll('.item-select');
+  selects.forEach(sel => {
+    const currentVal = sel.value;
+    sel.innerHTML = optionsHtml(currentVal);
+    // Tenta manter a seleção, ou pega o primeiro se o item sumiu
+    if (CRAFTABLE_ITEMS.includes(currentVal)) {
+      sel.value = currentVal;
+    } else {
+      sel.value = CRAFTABLE_ITEMS[0];
+    }
+  });
+}
+
+function computeStage(itemName, visiting){
+  if (STAGE_MAP[itemName] !== undefined) return STAGE_MAP[itemName];
+  const recipe = RECIPE_MAP[itemName];
+  if (!recipe) return 0; // matéria-prima bruta
+  if (visiting.has(itemName)) return 0; // guarda contra ciclo
+  visiting.add(itemName);
+  let maxInputStage = 0;
+  recipe.custo.forEach(entrada => {
+    maxInputStage = Math.max(maxInputStage, computeStage(entrada.item, visiting));
+  });
+  visiting.delete(itemName);
+  const stage = maxInputStage + 1;
+  STAGE_MAP[itemName] = stage;
+  return stage;
+}
+
+function getAllStockItems(){
+  const set = new Set([...CRAFTABLE_ITEMS, ...RAW_ITEMS, ...CUSTOM_ITEMS]);
+  return [...set].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+
+/* ---------- Local Storage Wrappers ---------- */
+function loadCustomRecipes(){
+  try{ const r = localStorage.getItem(CUSTOM_RECIPES_KEY); return r ? JSON.parse(r) : []; }
+  catch(e){ return []; }
+}
+function saveCustomRecipes(list){
+  try{ localStorage.setItem(CUSTOM_RECIPES_KEY, JSON.stringify(list)); }catch(e){}
+}
+function loadCustomItems(){
+  try{ const raw = localStorage.getItem(CUSTOM_ITEMS_KEY); return raw !== null ? JSON.parse(raw) : ['Ferro de Alta Qualidade']; }
+  catch(e){ return ['Ferro de Alta Qualidade']; }
+}
+function saveCustomItems(list){
+  try{ localStorage.setItem(CUSTOM_ITEMS_KEY, JSON.stringify(list)); }catch(e){}
+}
+function loadStock(){
+  try{ const raw = localStorage.getItem(STOCK_KEY); return raw ? JSON.parse(raw) : {}; }
+  catch(e){ return {}; }
+}
+function saveStock(stock){
+  try{
+    localStorage.setItem(STOCK_KEY, JSON.stringify(stock));
+    flashMsg('stockSavedFlash', 'Estoque salvo ✓');
+  }catch(e){}
+}
+function loadContracts(){
+  try{ const raw = localStorage.getItem(CONTRACTS_KEY); return raw ? JSON.parse(raw) : []; }
+  catch(e){ return []; }
+}
+function saveContracts(list){
+  try{ localStorage.setItem(CONTRACTS_KEY, JSON.stringify(list)); }catch(e){}
+}
+
+/* ---------- Modal de confirmação e UI Helpers ---------- */
+function showConfirm(message, onConfirm){
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="blueprint-panel corners modal-box p-5">
+      <p class="font-mono text-sm text-[var(--ink)] leading-relaxed mb-5">${message}</p>
+      <div class="flex gap-3">
+        <button id="modalCancelBtn" class="btn-ghost flex-1 py-2 rounded text-sm font-mono">Cancelar</button>
+        <button id="modalConfirmBtn" class="btn-amber flex-1 py-2 rounded text-sm uppercase">Confirmar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('#modalCancelBtn').addEventListener('click', close);
+  overlay.querySelector('#modalConfirmBtn').addEventListener('click', () => { close(); onConfirm(); });
+}
+
+const flashTimeouts = {};
+function flashMsg(elId, text){
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.style.opacity = '1';
+  clearTimeout(flashTimeouts[elId]);
+  flashTimeouts[elId] = setTimeout(() => { el.style.opacity = '0'; }, 1600);
+}
+
+/* ---------- Resolução do Cálculo ---------- */
+function resolveItem(itemName, quantity, ctx, depth){
+  if (depth > 64 || quantity <= 0) return;
+
+  if (!ctx.report[itemName]){
+    ctx.report[itemName] = { necessario: 0, usado: 0, tipo: RECIPE_MAP[itemName] ? 'intermediario' : 'bruto' };
+  }
+  const rep = ctx.report[itemName];
+  rep.necessario += quantity;
+
+  const stockDisponivel = (STOCK[itemName] || 0) - rep.usado;
+  const usarDoEstoque = Math.max(0, Math.min(stockDisponivel, quantity));
+  rep.usado += usarDoEstoque;
+
+  const restante = quantity - usarDoEstoque;
+  if (restante <= 0) return;
+
+  const recipe = RECIPE_MAP[itemName];
+
+  if (!recipe){
+    ctx.raw[itemName] = (ctx.raw[itemName] || 0) + restante;
+    return;
+  }
+
+  ctx.intermediates[itemName] = (ctx.intermediates[itemName] || 0) + restante;
+
+  if (!ctx.machines[recipe.maquina]){
+    ctx.machines[recipe.maquina] = { total: 0, items: {} };
+  }
+  ctx.machines[recipe.maquina].total += restante;
+  ctx.machines[recipe.maquina].items[itemName] = (ctx.machines[recipe.maquina].items[itemName] || 0) + restante;
+
+  recipe.custo.forEach(entrada => {
+    resolveItem(entrada.item, entrada.quantidade * restante, ctx, depth + 1);
+  });
+}
+
+function calculateContract(rows){
+  const ctx = { raw: {}, intermediates: {}, machines: {}, report: {} };
+  rows.forEach(row => {
+    if (row.item && row.qty > 0){
+      resolveItem(row.item, row.qty, ctx, 0);
+    }
+  });
+  return ctx;
+}
+
+/* ---------- Tabs ---------- */
+const tabs = {
+  contrato: { btn: document.getElementById('tabContratoBtn'), panel: document.getElementById('tabContrato') },
+  estoque: { btn: document.getElementById('tabEstoqueBtn'), panel: document.getElementById('tabEstoque') },
+  receitas: { btn: document.getElementById('tabReceitasBtn'), panel: document.getElementById('tabReceitas') },
+  contratos: { btn: document.getElementById('tabContratosBtn'), panel: document.getElementById('tabContratos') },
+};
+function activateTab(name){
+  Object.entries(tabs).forEach(([key, t]) => {
+    if (key === name){ t.btn.classList.add('active'); t.panel.classList.remove('hidden'); }
+    else { t.btn.classList.remove('active'); t.panel.classList.add('hidden'); }
+  });
+}
+tabs.contrato.btn.addEventListener('click', () => activateTab('contrato'));
+tabs.estoque.btn.addEventListener('click', () => activateTab('estoque'));
+tabs.receitas.btn.addEventListener('click', () => activateTab('receitas'));
+tabs.contratos.btn.addEventListener('click', () => activateTab('contratos'));
+
+/* ---------- UI: Contrato ---------- */
+const rowsContainer = document.getElementById('rows');
+let rowId = 0;
+
+function optionsHtml(selected){
+  return CRAFTABLE_ITEMS.map(name =>
+    `<option value="${name}" ${name === selected ? 'selected' : ''}>${name}</option>`
+  ).join('');
+}
+
+function addRow(defaultItem, defaultQty){
+  rowId++;
+  const wrap = document.createElement('div');
+  wrap.className = 'flex items-center gap-2 fade-up';
+  wrap.id = `row-${rowId}`;
+  wrap.innerHTML = `
+    <select class="item-select flex-1 min-w-0 rounded px-2 py-2 text-sm">
+      ${optionsHtml(defaultItem)}
+    </select>
+    <input type="number" min="1" value="${defaultQty || 1}" class="qty-input w-20 rounded px-2 py-2 text-sm text-right" />
+    <button class="row-remove px-2 py-2 text-lg leading-none" title="Remover item">✕</button>
+  `;
+  wrap.querySelector('.row-remove').addEventListener('click', () => { wrap.remove(); invalidateCalculation(); });
+  wrap.querySelector('.item-select').addEventListener('change', invalidateCalculation);
+  wrap.querySelector('.qty-input').addEventListener('input', invalidateCalculation);
+  rowsContainer.appendChild(wrap);
+}
+
+document.getElementById('addRow').addEventListener('click', () => { addRow(CRAFTABLE_ITEMS[0], 1); invalidateCalculation(); });
+
+/* ---------- UI: Estoque ---------- */
+const stockListEl = document.getElementById('stockList');
+
+function renderStockList(filterText){
+  const filter = (filterText || '').trim().toLowerCase();
+  const items = getAllStockItems().filter(name => name.toLowerCase().includes(filter));
+  stockListEl.innerHTML = '';
+
+  items.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between gap-2 py-1';
+    
+    // Tagging logic: Fabricado priority if it has a recipe
+    const isRecipe = !!RECIPE_MAP[name];
+    const isCustomRaw = !isRecipe && CUSTOM_ITEMS.includes(name);
+    const tag = isRecipe ? '· fabricado' : (isCustomRaw ? '· personalizado' : '· bruto');
+    
+    row.innerHTML = `
+      <span class="text-sm truncate pr-2">
+        ${name}
+        <span class="stamp-label ml-1">${tag}</span>
+      </span>
+      <div class="flex items-center gap-1 shrink-0">
+        <input type="number" min="0" data-item="${name}" value="${STOCK[name] || 0}"
+          class="stock-input w-24 rounded px-2 py-1.5 text-sm text-right" />
+        ${isCustomRaw ? `<button class="row-remove px-1 text-base leading-none" data-remove-custom="${name}" title="Remover item personalizado">✕</button>` : ''}
+      </div>
+    `;
+    stockListEl.appendChild(row);
+  });
+
+  stockListEl.querySelectorAll('.stock-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const name = input.dataset.item;
+      const val = Math.max(0, parseInt(input.value, 10) || 0);
+      STOCK[name] = val;
+      saveStock(STOCK);
+      invalidateCalculation();
+    });
+  });
+
+  stockListEl.querySelectorAll('[data-remove-custom]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.removeCustom;
+      showConfirm(`Remover "${name}" da lista de estoque? A quantidade guardada dele também será apagada.`, () => {
+        CUSTOM_ITEMS = CUSTOM_ITEMS.filter(n => n !== name);
+        saveCustomItems(CUSTOM_ITEMS);
+        delete STOCK[name];
+        saveStock(STOCK);
+        renderStockList(document.getElementById('stockSearch').value);
+      });
+    });
+  });
+}
+
+document.getElementById('stockSearch').addEventListener('input', (e) => renderStockList(e.target.value));
+
+document.getElementById('addCustomItemBtn').addEventListener('click', () => {
+  const input = document.getElementById('customItemInput');
+  const warning = document.getElementById('customItemWarning');
+  const name = input.value.trim();
+
+  if (!name){
+    warning.textContent = 'Digite um nome para o item.';
+    warning.classList.remove('hidden'); return;
+  }
+  if (getAllStockItems().some(n => n.toLowerCase() === name.toLowerCase())){
+    warning.textContent = 'Esse item já está no estoque.';
+    warning.classList.remove('hidden'); return;
+  }
+  warning.classList.add('hidden');
+
+  CUSTOM_ITEMS.push(name);
+  saveCustomItems(CUSTOM_ITEMS);
+  input.value = '';
+  renderStockList(document.getElementById('stockSearch').value);
+  updateDatalist();
+});
+
+document.getElementById('clearStockBtn').addEventListener('click', () => {
+  showConfirm('Zerar todas as quantidades em estoque?', () => {
+    STOCK = {};
+    saveStock(STOCK);
+    renderStockList(document.getElementById('stockSearch').value);
+    invalidateCalculation();
+  });
+});
+
+
+/* ---------- UI: Receitas (Nova Aba) ---------- */
+const recipeIngredientsEl = document.getElementById('recipeIngredients');
+
+function addIngredientRow() {
+  const wrap = document.createElement('div');
+  wrap.className = 'flex items-center gap-2 fade-up recipe-ingredient-row';
+  wrap.innerHTML = `
+    <input type="text" list="allIngredientsList" placeholder="Ex: Cobre" class="ing-name flex-1 min-w-0 rounded px-2 py-2 text-sm" />
+    <input type="number" min="1" value="1" placeholder="Qtd" class="ing-qty w-20 rounded px-2 py-2 text-sm text-right" />
+    <button class="row-remove px-2 py-2 text-lg leading-none" title="Remover ingrediente">✕</button>
+  `;
+  wrap.querySelector('.row-remove').addEventListener('click', () => wrap.remove());
+  recipeIngredientsEl.appendChild(wrap);
+}
+
+document.getElementById('addIngredientBtn').addEventListener('click', addIngredientRow);
+
+document.getElementById('saveRecipeBtn').addEventListener('click', () => {
+  const warning = document.getElementById('recipeWarning');
+  const name = document.getElementById('recipeNameInput').value.trim();
+  const machine = document.getElementById('recipeMachineInput').value.trim();
+
+  if(!name || !machine) {
+    warning.textContent = 'Nome do item e Máquina são obrigatórios.';
+    warning.classList.remove('hidden'); return;
+  }
+
+  // Verifica duplicidade no nome
+  if(ALL_RECEITAS.some(r => r.item.toLowerCase() === name.toLowerCase())) {
+    warning.textContent = 'Já existe uma receita para este item.';
+    warning.classList.remove('hidden'); return;
+  }
+
+  const ingRows = [...document.querySelectorAll('#recipeIngredients .recipe-ingredient-row')];
+  const custo = [];
+  
+  ingRows.forEach(row => {
+    const ingName = row.querySelector('.ing-name').value.trim();
+    const ingQty = parseInt(row.querySelector('.ing-qty').value, 10);
+    if(ingName && ingQty > 0) {
+      custo.push({ item: ingName, quantidade: ingQty });
+    }
+  });
+
+  if(custo.length === 0) {
+    warning.textContent = 'Adicione pelo menos 1 ingrediente válido (com quantidade > 0).';
+    warning.classList.remove('hidden'); return;
+  }
+
+  warning.classList.add('hidden');
+
+  // Adiciona a receita e re-inicializa os dados
+  CUSTOM_RECIPES.push({ item: name, maquina: machine, custo });
+  saveCustomRecipes(CUSTOM_RECIPES);
+  
+  // Limpa o form
+  document.getElementById('recipeNameInput').value = '';
+  document.getElementById('recipeMachineInput').value = '';
+  recipeIngredientsEl.innerHTML = '';
+  addIngredientRow(); // Deixa uma linha em branco preparada
+  
+  initData();
+  invalidateCalculation();
+  flashMsg('customRecipeCount', 'Receita Salva!');
+});
+
+function renderCustomRecipesList() {
+  const listEl = document.getElementById('customRecipesList');
+  const emptyEl = document.getElementById('customRecipesEmpty');
+  const countEl = document.getElementById('customRecipeCount');
+  
+  listEl.innerHTML = '';
+  if (CUSTOM_RECIPES.length === 0){
+    emptyEl.classList.remove('hidden');
+    countEl.textContent = '';
+    return;
+  }
+  
+  emptyEl.classList.add('hidden');
+  countEl.textContent = `(${CUSTOM_RECIPES.length})`;
+
+  CUSTOM_RECIPES.forEach((recipe, index) => {
+    const card = document.createElement('div');
+    card.className = 'recipe-card fade-up flex justify-between items-start';
+    
+    const ingredientsHtml = recipe.custo.map(c => `${c.quantidade}x ${c.item}`).join(' + ');
+    
+    card.innerHTML = `
+      <div>
+        <div class="font-display text-white text-base">${recipe.item}</div>
+        <div class="stamp-label mb-1">${recipe.maquina}</div>
+        <div class="font-mono text-xs text-[var(--ink-dim)]">${ingredientsHtml}</div>
+      </div>
+      <button class="row-remove px-2 py-1 text-lg leading-none" data-del-recipe="${index}" title="Excluir receita">✕</button>
+    `;
+    listEl.appendChild(card);
+  });
+
+  listEl.querySelectorAll('[data-del-recipe]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.delRecipe;
+      const rName = CUSTOM_RECIPES[idx].item;
+      showConfirm(`Excluir a receita de "${rName}"? Isso afetará cálculos futuros.`, () => {
+        CUSTOM_RECIPES.splice(idx, 1);
+        saveCustomRecipes(CUSTOM_RECIPES);
+        initData();
+        invalidateCalculation();
+      });
+    });
+  });
+}
+
+
+/* ---------- Renderização de Resultados ---------- */
+const fmt = n => n.toLocaleString('pt-BR');
+let lastCtx = null;
+
+function badgeFor(necessario, usado){
+  const falta = necessario - usado;
+  if (falta <= 0) return `<span class="badge badge-green">Suficiente</span>`;
+  if (usado > 0) return `<span class="badge badge-yellow">Parcial</span>`;
+  return `<span class="badge badge-red">Falta tudo</span>`;
+}
+
+function renderReport(ctx){
+  const body = document.getElementById('reportBody');
+  const empty = document.getElementById('reportEmpty');
+  const entries = Object.entries(ctx.report)
+    .map(([name, rep]) => ({ name, ...rep, falta: rep.necessario - rep.usado }))
+    .sort((a,b) => b.falta - a.falta || b.necessario - a.necessario);
+
+  body.innerHTML = '';
+  if (entries.length === 0){ empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  entries.forEach(e => {
+    const tr = document.createElement('tr');
+    tr.className = 'fade-up';
+    tr.innerHTML = `
+      <td class="text-[var(--ink)]">${e.name}<span class="stamp-label ml-2">${e.tipo === 'bruto' ? 'bruto' : 'fabricado'}</span></td>
+      <td>${fmt(e.necessario)}</td>
+      <td class="text-[var(--green)]">${fmt(e.usado)}</td>
+      <td class="flex items-center gap-2"><span>${fmt(e.falta)}</span> ${badgeFor(e.necessario, e.usado)}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function renderStages(ctx){
+  const container = document.getElementById('stagesList');
+  const emptyEl = document.getElementById('interEmpty');
+  container.innerHTML = '';
+
+  const entries = Object.entries(ctx.intermediates);
+  if (entries.length === 0){ emptyEl.classList.remove('hidden'); return; }
+  emptyEl.classList.add('hidden');
+
+  const byStage = {};
+  entries.forEach(([name, qty]) => {
+    const stage = STAGE_MAP[name] || 1;
+    if (!byStage[stage]) byStage[stage] = [];
+    byStage[stage].push({ name, qty });
+  });
+
+  const stageNumbers = Object.keys(byStage).map(Number).sort((a,b) => a - b);
+
+  stageNumbers.forEach(stageNum => {
+    const items = byStage[stageNum].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+
+    const block = document.createElement('div');
+    block.className = 'stage-block fade-up';
+    block.innerHTML = `<div class="stage-dot"></div>`;
+
+    const header = document.createElement('div');
+    header.className = 'flex items-center gap-2 mb-3';
+    header.innerHTML = `
+      <span class="badge-stage">Etapa ${stageNum}</span>
+      <span class="stamp-label">${items.length} fabricação${items.length > 1 ? 'ões' : ''} nesta etapa</span>
+    `;
+    block.appendChild(header);
+
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'space-y-2';
+
+    items.forEach(({ name, qty }) => {
+      const recipe = RECIPE_MAP[name];
+      const receitaPorUnidade = recipe.custo
+        .map(c => `${fmt(c.quantidade)}× ${c.item}`)
+        .join(' + ');
+      const consumoTotal = recipe.custo
+        .map(c => `${fmt(c.quantidade * qty)}× ${c.item}`)
+        .join(' + ');
+
+      const card = document.createElement('div');
+      card.className = 'recipe-card';
+      card.innerHTML = `
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span class="font-display text-white text-base">${name}</span>
+          <span class="font-mono text-[var(--amber)] font-600 shrink-0">fabricar ${fmt(qty)}×</span>
+        </div>
+        <div class="stamp-label mb-2">${recipe.maquina}</div>
+        <div class="font-mono text-xs text-[var(--ink)] leading-relaxed">
+          ${receitaPorUnidade} <span class="recipe-arrow">→</span> 1× ${name}
+        </div>
+        <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed mt-1">
+          Total para esta etapa: ${consumoTotal}
+        </div>
+      `;
+      cardsWrap.appendChild(card);
+    });
+
+    block.appendChild(cardsWrap);
+    container.appendChild(block);
+  });
+}
+
+function renderResults(ctx){
+  renderReport(ctx);
+
+  const rawList = document.getElementById('rawList');
+  const rawEmpty = document.getElementById('rawEmpty');
+  const rawEntries = Object.entries(ctx.raw).sort((a,b)=>b[1]-a[1]);
+  rawList.innerHTML = '';
+  if (rawEntries.length === 0){ rawEmpty.classList.remove('hidden'); }
+  else {
+    rawEmpty.classList.add('hidden');
+    rawEntries.forEach(([name, qty]) => {
+      const el = document.createElement('div');
+      el.className = 'fade-up flex items-center justify-between border border-[var(--blue-line)] rounded px-3 py-2';
+      el.innerHTML = `<span class="text-[var(--ink)] truncate pr-2">${name}</span><span class="text-[var(--green)] font-600">${fmt(qty)}</span>`;
+      rawList.appendChild(el);
+    });
+  }
+
+  renderStages(ctx);
+
+  const machineList = document.getElementById('machineList');
+  const machineEmpty = document.getElementById('machineEmpty');
+  const machineEntries = Object.entries(ctx.machines).sort((a,b)=>b[1].total-a[1].total);
+  machineList.innerHTML = '';
+  if (machineEntries.length === 0){ machineEmpty.classList.remove('hidden'); }
+  else {
+    machineEmpty.classList.add('hidden');
+    const maxTotal = Math.max(...machineEntries.map(([,v]) => v.total));
+    machineEntries.forEach(([machine, data]) => {
+      const pct = Math.max(6, Math.round((data.total / maxTotal) * 100));
+      const itemsBreakdown = Object.entries(data.items)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([name, qty]) => `${name} (${fmt(qty)}×)`)
+        .join(' · ');
+      const block = document.createElement('div');
+      block.className = 'fade-up';
+      block.innerHTML = `
+        <div class="flex items-baseline justify-between mb-1">
+          <span class="font-display text-base font-600 text-white">${machine}</span>
+          <span class="font-mono text-[var(--amber)] font-600">${fmt(data.total)} usos</span>
+        </div>
+        <div class="machine-bar mb-2"><span style="width:${pct}%"></span></div>
+        <p class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed">${itemsBreakdown}</p>
+      `;
+      machineList.appendChild(block);
+    });
+  }
+}
+
+function invalidateCalculation(){
+  if (lastCtx === null) return;
+  lastCtx = null;
+  document.getElementById('contractNumberInput').disabled = true;
+  document.getElementById('launchContractBtn').disabled = true;
+  document.getElementById('launchWarning').classList.add('hidden');
+}
+
+document.getElementById('calcBtn').addEventListener('click', () => {
+  const rows = [...rowsContainer.querySelectorAll('div[id^="row-"]')].map(rowEl => ({
+    item: rowEl.querySelector('.item-select').value,
+    qty: parseInt(rowEl.querySelector('.qty-input').value, 10) || 0
+  }));
+
+  const warning = document.getElementById('emptyWarning');
+  const validRows = rows.filter(r => r.item && r.qty > 0);
+  if (validRows.length === 0){
+    warning.classList.remove('hidden');
+    invalidateCalculation();
+    return;
+  }
+  warning.classList.add('hidden');
+
+  lastCtx = calculateContract(validRows);
+  renderResults(lastCtx);
+
+  document.getElementById('contractNumberInput').disabled = false;
+  document.getElementById('launchContractBtn').disabled = false;
+  document.getElementById('launchWarning').classList.add('hidden');
+});
+
+/* ---------- Lançamento e Histórico de Contrato ---------- */
+function renderContractsCount(){
+  const n = CONTRACTS.filter(c => c.status === 'em_andamento').length;
+  document.getElementById('contratosAndamentoCount').textContent = n > 0 ? `(${n})` : '';
+}
+
+function statusBadge(status){
+  if (status === 'em_andamento') return `<span class="badge badge-yellow">Em Andamento</span>`;
+  if (status === 'concluido') return `<span class="badge badge-green">Concluído</span>`;
+  return `<span class="badge badge-gray">Cancelado</span>`;
+}
+
+function renderContractsList(){
+  const listEl = document.getElementById('contractsList');
+  const emptyEl = document.getElementById('contractsEmpty');
+  listEl.innerHTML = '';
+
+  if (CONTRACTS.length === 0){ emptyEl.classList.remove('hidden'); renderContractsCount(); return; }
+  emptyEl.classList.add('hidden');
+
+  CONTRACTS.forEach(contract => {
+    const dataFormatada = new Date(contract.data).toLocaleString('pt-BR');
+    const faltaTotal = contract.itens.reduce((acc, it) => acc + Math.max(0, it.falta), 0);
+    const usadoTotal = contract.itens.reduce((acc, it) => acc + it.usado, 0);
+
+    const card = document.createElement('div');
+    card.className = 'contract-card fade-up';
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div>
+          <div class="font-display text-base font-600 text-white">${contract.numero}</div>
+          <div class="stamp-label">${dataFormatada}</div>
+        </div>
+        ${statusBadge(contract.status)}
+      </div>
+      <div class="font-mono text-xs text-[var(--ink-dim)] mb-2">
+        ${contract.itens.length} item(ns) rastreados · ${fmt(usadoTotal)} do estoque · ${fmt(faltaTotal)} ainda a produzir/coletar
+      </div>
+      <details class="mb-2">
+        <summary class="font-mono text-xs text-[var(--amber)] cursor-pointer select-none">Ver itens</summary>
+        <div class="mt-2 space-y-1">
+          ${contract.itens.map(it => `
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="truncate pr-2">${it.name}</span>
+              <span class="text-[var(--ink-dim)] shrink-0">nec ${fmt(it.necessario)} · est ${fmt(it.usado)} · falta ${fmt(Math.max(0,it.falta))}</span>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+      ${contract.status === 'em_andamento' ? `
+        <div class="flex gap-2">
+          <button class="btn-mini mini-green flex-1" data-action="concluir" data-numero="${contract.numero}">Concluir</button>
+          <button class="btn-mini mini-red flex-1" data-action="cancelar" data-numero="${contract.numero}">Cancelar (devolve estoque)</button>
+        </div>
+      ` : `
+        <button class="btn-mini flex-1 w-full" data-action="remover" data-numero="${contract.numero}">Remover do histórico</button>
+      `}
+    `;
+    listEl.appendChild(card);
+  });
+
+  listEl.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const numero = btn.dataset.numero;
+      const action = btn.dataset.action;
+      const contract = CONTRACTS.find(c => c.numero === numero);
+      if (!contract) return;
+
+      if (action === 'concluir'){
+        contract.status = 'concluido';
+        saveContracts(CONTRACTS);
+        renderContractsList();
+      } else if (action === 'cancelar'){
+        showConfirm(`Cancelar o contrato "${numero}"? A quantidade deduzida do estoque será devolvida.`, () => {
+          contract.itens.forEach(it => { STOCK[it.name] = (STOCK[it.name] || 0) + it.usado; });
+          saveStock(STOCK);
+          renderStockList(document.getElementById('stockSearch').value);
+          contract.status = 'cancelado';
+          saveContracts(CONTRACTS);
+          renderContractsList();
+        });
+      } else if (action === 'remover'){
+        showConfirm(`Remover o contrato "${numero}" do histórico? Esta ação não pode ser desfeita.`, () => {
+          CONTRACTS = CONTRACTS.filter(c => c.numero !== numero);
+          saveContracts(CONTRACTS);
+          renderContractsList();
+        });
+      }
+    });
+  });
+
+  renderContractsCount();
+}
+
+document.getElementById('launchContractBtn').addEventListener('click', () => {
+  const warning = document.getElementById('launchWarning');
+  const input = document.getElementById('contractNumberInput');
+  const numero = input.value.trim();
+
+  if (!lastCtx){
+    warning.textContent = 'Calcule o contrato novamente antes de lançar.';
+    warning.classList.remove('hidden'); return;
+  }
+  if (!numero){
+    warning.textContent = 'Informe o número do contrato.';
+    warning.classList.remove('hidden'); return;
+  }
+  if (CONTRACTS.some(c => c.numero === numero)){
+    warning.textContent = 'Já existe um contrato com esse número.';
+    warning.classList.remove('hidden'); return;
+  }
+  warning.classList.add('hidden');
+
+  Object.entries(lastCtx.report).forEach(([name, rep]) => {
+    STOCK[name] = Math.max(0, (STOCK[name] || 0) - rep.usado);
+  });
+  saveStock(STOCK);
+  renderStockList(document.getElementById('stockSearch').value);
+
+  const contract = {
+    numero,
+    data: new Date().toISOString(),
+    status: 'em_andamento',
+    itens: Object.entries(lastCtx.report).map(([name, rep]) => ({
+      name, necessario: rep.necessario, usado: rep.usado, falta: rep.necessario - rep.usado, tipo: rep.tipo
+    })),
+  };
+  CONTRACTS.unshift(contract);
+  saveContracts(CONTRACTS);
+  renderContractsList();
+
+  input.value = '';
+  invalidateCalculation();
+  activateTab('contratos');
+});
+
+/* ---------- Inicialização Principal ---------- */
+initData();
+addRow(CRAFTABLE_ITEMS[0], 1);
+renderContractsList();
+addIngredientRow(); // Deixa uma linha no form de receita
+
+</script>
+</body>
+</html>
