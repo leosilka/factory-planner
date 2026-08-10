@@ -1,0 +1,20 @@
+# Production Chain Manager
+
+A frontend-only web application designed to help users track raw materials, calculate manufacturing steps, and fulfill production contracts efficiently. 
+
+This tool operates entirely in the browser, utilizing `localStorage` to persist inventory data and custom recipes without the need for a backend or database.
+
+## 🚀 Features
+
+* **Contract Management:** Calculate the exact amount of raw materials and intermediate items needed to fulfill specific production contracts.
+* **Inventory Tracking:** Maintain a real-time stock of raw materials and manufactured goods. Stock is automatically deducted when a contract is launched.
+* **Dynamic Recipes:** Register and save custom crafting recipes, specifying the required machine and material costs.
+* **Production Stages:** Get a clear, step-by-step breakdown of the manufacturing order (from raw resource gathering to the final product).
+* **Machine Usage:** View a detailed report on how many times each machine will be used per contract.
+
+## 🛠️ Tech Stack
+
+* HTML5
+* Vanilla JavaScript
+* Tailwind CSS (via CDN)
+* Google Fonts (Rajdhani, IBM Plex Mono, IBM Plex Sans)
