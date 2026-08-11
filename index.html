@@ -6,249 +6,293 @@
 <title>Painel de Contratos — Cadeia de Produção</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --blue-deep:#0A1F38;
-    --blue-panel:#0F2C4D;
-    --blue-panel-2:#123458;
-    --blue-line: rgba(160,196,240,0.14);
-    --blue-line-strong: rgba(160,196,240,0.28);
-    --ink:#E7EEF7;
-    --ink-dim:#8FA8C7;
-    --amber:#E8983A;
-    --amber-dim:#B97429;
-    --green:#6FCF97;
-    --red:#E2725B;
-    --yellow:#E0C349;
-    --gray:#9AA7B8;
+  :root {
+    --bg-dark: #09090b;
+    --bg-panel: rgba(24, 24, 27, 0.55);
+    --border-panel: rgba(255, 255, 255, 0.08);
+    --text-main: #f4f4f5;
+    --text-dim: #a1a1aa;
+    
+    /* Paleta ARGB Neon */
+    --neon-cyan: #22d3ee;
+    --neon-purple: #c084fc;
+    --neon-pink: #f472b6;
+    
+    /* Status */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
   }
-  *{box-sizing:border-box;}
-  html,body{background:var(--blue-deep);}
-  body{
-    font-family:'IBM Plex Sans', sans-serif;
-    color:var(--ink);
-    background-image:
-      linear-gradient(var(--blue-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--blue-line) 1px, transparent 1px);
-    background-size: 28px 28px;
+  
+  * { box-sizing: border-box; }
+  
+  html, body { 
+    background-color: var(--bg-dark); 
+    color: var(--text-main);
+  }
+  
+  body {
+    /* Gradiente radial de fundo para simular iluminação de setup */
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(192, 132, 252, 0.07), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(34, 211, 238, 0.07), transparent 25%);
     background-attachment: fixed;
-    min-height:100vh;
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
-  .font-display{ font-family:'Rajdhani', sans-serif; letter-spacing:0.02em; }
-  .font-mono{ font-family:'IBM Plex Mono', monospace; }
+  
+  .font-display { font-family: 'Outfit', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-  .blueprint-panel{
-    position:relative;
-    background: linear-gradient(180deg, var(--blue-panel), var(--blue-panel-2));
-    border: 1px solid var(--blue-line-strong);
-  }
-
-  .corners{ position:relative; }
-  .corners::before, .corners::after{
-    content:'';
-    position:absolute;
-    width:16px; height:16px;
-    pointer-events:none;
-  }
-  .corners::before{
-    top:-1px; left:-1px;
-    border-top:2px solid var(--amber);
-    border-left:2px solid var(--amber);
-  }
-  .corners::after{
-    bottom:-1px; right:-1px;
-    border-bottom:2px solid var(--amber);
-    border-right:2px solid var(--amber);
+  /* Efeito de Vidro Fosco (Glassmorphism) e Animação ARGB */
+  .glass-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-panel);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+    position: relative;
   }
 
-  .stamp-label{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:10px;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    color: var(--ink-dim);
+  @keyframes argb-breathe {
+    0% { border-color: rgba(34, 211, 238, 0.3); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
+    50% { border-color: rgba(192, 132, 252, 0.3); box-shadow: 0 0 15px rgba(192, 132, 252, 0.1); }
+    100% { border-color: rgba(244, 114, 182, 0.3); box-shadow: 0 0 15px rgba(244, 114, 182, 0.1); }
+  }
+  
+  .argb-sync {
+    animation: argb-breathe 8s infinite alternate ease-in-out;
   }
 
-  select, input[type="number"], input[type="text"]{
-    background: rgba(6,20,38,0.55);
-    border: 1px solid var(--blue-line-strong);
-    color: var(--ink);
-    font-family:'IBM Plex Mono', monospace;
+  .top-glow-bar {
+    height: 3px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+    box-shadow: 0 2px 10px rgba(192, 132, 252, 0.5);
   }
-  select:focus, input:focus{
+
+  .stamp-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--neon-cyan);
+    font-weight: 700;
+  }
+
+  select, input[type="number"], input[type="text"] {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-panel);
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s ease;
+  }
+  select:focus, input:focus {
     outline: none;
-    border-color: var(--amber);
-    box-shadow: 0 0 0 1px var(--amber-dim);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3);
   }
-  select option { background: var(--blue-panel); color: var(--ink); }
-  input:disabled, button:disabled{ opacity:0.4; cursor:not-allowed; }
+  select option { background: #18181b; color: var(--text-main); }
+  input:disabled, button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
 
-  .btn-amber{
-    background: var(--amber);
-    color: #17110A;
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    letter-spacing:0.04em;
-    transition: filter 0.15s ease, transform 0.1s ease;
+  /* Botão Primário (Gradient Neon) */
+  .btn-neon {
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    color: #000;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: none;
+    transition: all 0.2s ease;
   }
-  .btn-amber:hover:not(:disabled){ filter:brightness(1.08); }
-  .btn-amber:active:not(:disabled){ transform: translateY(1px); }
-
-  .btn-ghost{
-    background: transparent;
-    border: 1px solid var(--blue-line-strong);
-    color: var(--ink-dim);
-    transition: border-color 0.15s ease, color 0.15s ease;
+  .btn-neon:hover:not(:disabled) {
+    filter: brightness(1.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
   }
-  .btn-ghost:hover:not(:disabled){ border-color: var(--amber-dim); color: var(--ink); }
+  .btn-neon:active:not(:disabled) { transform: translateY(1px); }
 
-  .btn-mini{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    padding:4px 10px;
-    border-radius:4px;
-    border:1px solid var(--blue-line-strong);
-    color: var(--ink-dim);
-    transition: all 0.15s ease;
+  /* Botão Secundário (Ghost) */
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-panel);
+    color: var(--text-dim);
+    transition: all 0.2s ease;
   }
-  .btn-mini:hover{ color:var(--ink); }
-  .btn-mini.mini-green:hover{ border-color: var(--green); color: var(--green); }
-  .btn-mini.mini-red:hover{ border-color: var(--red); color: var(--red); }
-  .btn-mini.mini-amber:hover{ border-color: var(--amber); color: var(--amber); }
-
-  .row-remove{
-    color: var(--red);
-    opacity:0.65;
-    transition: opacity 0.15s ease;
-  }
-  .row-remove:hover{ opacity:1; }
-
-  .divider-dash{
-    border-top: 1px dashed var(--blue-line-strong);
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--neon-purple);
+    background: rgba(192, 132, 252, 0.08);
+    color: var(--text-main);
   }
 
-  .scroll-thin::-webkit-scrollbar{ width:6px; height:6px; }
-  .scroll-thin::-webkit-scrollbar-thumb{ background: var(--blue-line-strong); border-radius:3px; }
-  .scroll-thin::-webkit-scrollbar-track{ background: transparent; }
+  .btn-mini {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-panel);
+    color: var(--text-dim);
+    transition: all 0.2s ease;
+  }
+  .btn-mini:hover { color: var(--text-main); }
+  .btn-mini.mini-green:hover { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.1); }
+  .btn-mini.mini-red:hover { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+  .btn-mini.mini-amber:hover { border-color: var(--warning); color: var(--warning); background: rgba(245, 158, 11, 0.1); }
 
-  @keyframes fadeUp{
-    from{ opacity:0; transform: translateY(6px); }
-    to{ opacity:1; transform: translateY(0); }
+  .row-remove {
+    color: var(--danger);
+    opacity: 0.65;
+    transition: all 0.2s ease;
   }
-  .fade-up{ animation: fadeUp 0.35s ease both; }
+  .row-remove:hover { opacity: 1; transform: scale(1.1); text-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
 
-  .machine-bar{
-    height:6px;
-    background: rgba(232,152,58,0.15);
-    position:relative;
-    overflow:hidden;
-    border-radius:2px;
-  }
-  .machine-bar > span{
-    display:block;
-    height:100%;
-    background: var(--amber);
-    border-radius:2px;
-    transition: width 0.5s ease;
-  }
-
-  .tab-btn{
-    font-family:'Rajdhani', sans-serif;
-    font-weight:600;
-    letter-spacing:0.03em;
-    font-size:14px;
-    padding:8px 4px;
-    color: var(--ink-dim);
-    border-bottom:2px solid transparent;
-    transition: color 0.15s ease, border-color 0.15s ease;
-    white-space:nowrap;
-  }
-  .tab-btn.active{
-    color: var(--ink);
-    border-color: var(--amber);
+  .divider-dash {
+    border-top: 1px solid var(--border-panel);
   }
 
-  .badge{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    letter-spacing:0.03em;
-    padding:2px 8px;
-    border-radius:999px;
-    display:inline-block;
-    white-space:nowrap;
+  /* Scrollbars Futuristas */
+  .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  .scroll-thin::-webkit-scrollbar-thumb:hover { background: var(--neon-purple); }
+  .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .badge-green{ background: rgba(111,207,151,0.16); color: var(--green); border:1px solid rgba(111,207,151,0.4); }
-  .badge-yellow{ background: rgba(224,195,73,0.16); color: var(--yellow); border:1px solid rgba(224,195,73,0.4); }
-  .badge-red{ background: rgba(226,114,91,0.16); color: var(--red); border:1px solid rgba(226,114,91,0.4); }
-  .badge-gray{ background: rgba(154,167,184,0.14); color: var(--gray); border:1px solid rgba(154,167,184,0.35); }
-  .badge-stage{
-    background: rgba(232,152,58,0.14); color: var(--amber); border:1px solid rgba(232,152,58,0.45);
-    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:13px; letter-spacing:0.03em;
-    padding:3px 12px; border-radius:4px;
+  .fade-up { animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  .machine-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+  .machine-bar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
   }
 
-  .stage-block{ position:relative; padding-left:18px; }
-  .stage-block::before{
-    content:''; position:absolute; left:5px; top:26px; bottom:-8px; width:1px;
-    background: var(--blue-line-strong);
+  .tab-btn {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-size: 14px;
+    padding: 10px 16px;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
   }
-  .stage-block:last-child::before{ display:none; }
-  .stage-dot{
-    position:absolute; left:0; top:4px; width:11px; height:11px; border-radius:50%;
-    background: var(--amber); box-shadow:0 0 0 3px rgba(232,152,58,0.18);
-  }
-
-  .recipe-card{
-    border:1px solid var(--blue-line-strong);
-    border-radius:6px;
-    padding:10px 12px;
-    background: rgba(6,20,38,0.25);
-  }
-  .recipe-arrow{ color: var(--ink-dim); }
-
-  .modal-overlay{
-    position:fixed; inset:0; background: rgba(5,14,26,0.72);
-    display:flex; align-items:center; justify-content:center; padding:20px;
-    z-index:50;
-  }
-  .modal-box{
-    max-width:380px; width:100%;
+  .tab-btn:hover { color: var(--text-main); }
+  .tab-btn.active {
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
   }
 
-  .report-table{ width:100%; border-collapse:collapse; font-size:13px; }
-  .report-table th{
-    text-align:left;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:10px;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color: var(--ink-dim);
-    padding:6px 8px;
-    border-bottom:1px solid var(--blue-line-strong);
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    display: inline-block;
+    white-space: nowrap;
+    text-transform: uppercase;
   }
-  .report-table td{
-    padding:7px 8px;
-    border-bottom:1px solid var(--blue-line);
-    font-family:'IBM Plex Mono', monospace;
+  .badge-green { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 8px rgba(16, 185, 129, 0.2); }
+  .badge-yellow { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 0 8px rgba(245, 158, 11, 0.2); }
+  .badge-red { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+  .badge-gray { background: rgba(255, 255, 255, 0.05); color: var(--text-dim); border: 1px solid var(--border-panel); }
+  
+  .badge-stage {
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.15), rgba(192, 132, 252, 0.15));
+    color: var(--text-main);
+    border: 1px solid rgba(192, 132, 252, 0.4);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    padding: 4px 14px;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.2);
   }
-  .report-table tr:hover td{ background: rgba(160,196,240,0.04); }
 
-  .flash-msg{ transition: opacity 0.4s ease; }
-
-  .contract-card{
-    border:1px solid var(--blue-line-strong);
-    border-radius:6px;
-    padding:12px 14px;
+  .stage-block { position: relative; padding-left: 22px; }
+  .stage-block::before {
+    content: ''; position: absolute; left: 7px; top: 28px; bottom: -12px; width: 1px;
+    background: var(--border-panel);
   }
+  .stage-block:last-child::before { display: none; }
+  .stage-dot {
+    position: absolute; left: 3px; top: 8px; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan);
+  }
+
+  .glass-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-panel);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+  }
+  .glass-card:hover {
+    border-color: rgba(192, 132, 252, 0.4);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .recipe-arrow { color: var(--neon-purple); opacity: 0.7; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    z-index: 50;
+  }
+  .modal-box { max-width: 380px; width: 100%; }
+
+  .report-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  .report-table th {
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border-panel);
+  }
+  .report-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .report-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .flash-msg { transition: opacity 0.4s ease; }
 
   @media (prefers-reduced-motion: reduce){
-    .fade-up{ animation:none; }
-    .machine-bar > span{ transition:none; }
+    .fade-up { animation: none; }
+    .machine-bar > span { transition: none; }
+    .argb-sync { animation: none; border-color: var(--border-panel); }
   }
 </style>
 </head>
 <body class="pb-24">
+
+  <div class="top-glow-bar fixed top-0 z-50"></div>
 
   <!-- Datalist dinâmicos -->
   <datalist id="machineListOptions">
@@ -262,15 +306,15 @@
   <datalist id="allIngredientsList"></datalist>
 
   <!-- Header / title block -->
-  <header class="max-w-6xl mx-auto px-6 pt-10 pb-6">
-    <div class="blueprint-panel corners px-6 py-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+  <header class="max-w-6xl mx-auto px-6 pt-12 pb-6">
+    <div class="glass-panel argb-sync px-7 py-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div>
-        <p class="stamp-label mb-1">Fábrica // Planejamento de Produção</p>
-        <h1 class="font-display text-3xl sm:text-4xl font-700 text-white tracking-wide">PAINEL DE CONTRATOS</h1>
+        <p class="stamp-label mb-2 tracking-widest">Painel de Controle // ARGB Sync</p>
+        <h1 class="font-display text-4xl sm:text-5xl font-700 text-white tracking-wide">FÁBRICA NEON</h1>
       </div>
-      <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed sm:text-right">
-        <div>REV. 06 — EDIÇÃO E REFATORAÇÃO DE ITENS</div>
-        <div id="recipeCount">— receitas carregadas</div>
+      <div class="font-mono text-xs text-[var(--text-dim)] leading-relaxed sm:text-right">
+        <div>REV. 08 — DESIGN HIGH-PERFORMANCE</div>
+        <div id="recipeCount" class="text-[var(--neon-pink)]">— receitas prontas</div>
       </div>
     </div>
   </header>
@@ -279,127 +323,126 @@
 
     <!-- Left column: tabs -->
     <section class="lg:col-span-2">
-      <div class="blueprint-panel corners p-5 sticky top-6">
+      <div class="glass-panel p-6 sticky top-8">
 
-        <div class="flex gap-4 mb-4 border-b border-[var(--blue-line)] overflow-x-auto scroll-thin">
+        <div class="flex gap-2 mb-5 border-b border-[var(--border-panel)] overflow-x-auto scroll-thin pb-1">
           <button id="tabContratoBtn" class="tab-btn active">Contrato</button>
           <button id="tabEstoqueBtn" class="tab-btn">Estoque</button>
           <button id="tabReceitasBtn" class="tab-btn">Receitas</button>
-          <button id="tabContratosBtn" class="tab-btn">Histórico <span id="contratosAndamentoCount" class="font-mono text-[10px]"></span></button>
+          <button id="tabContratosBtn" class="tab-btn">Histórico <span id="contratosAndamentoCount" class="font-mono text-[10px] text-[var(--neon-purple)]"></span></button>
         </div>
 
         <!-- Painel: Contrato -->
         <div id="tabContrato">
           <p class="stamp-label mb-1">Etapa 01</p>
-          <h2 class="font-display text-xl font-600 text-white mb-4">Itens do Contrato</h2>
+          <h2 class="font-display text-2xl font-600 text-white mb-4">Setup de Produção</h2>
 
-          <div id="rows" class="space-y-2 max-h-[38vh] overflow-y-auto scroll-thin pr-1"></div>
+          <div id="rows" class="space-y-3 max-h-[38vh] overflow-y-auto scroll-thin pr-2"></div>
 
-          <button id="addRow" class="btn-ghost mt-3 w-full py-2 rounded text-sm font-mono flex items-center justify-center gap-2">
+          <button id="addRow" class="btn-ghost mt-4 w-full py-2.5 rounded-lg text-sm font-mono flex items-center justify-center gap-2">
             <span class="text-lg leading-none">+</span> Adicionar item
           </button>
 
-          <div class="divider-dash my-5"></div>
+          <div class="divider-dash my-6"></div>
 
-          <button id="calcBtn" class="btn-amber w-full py-3 rounded text-base uppercase">
-            Calcular Contrato
+          <button id="calcBtn" class="btn-neon w-full py-3.5 rounded-xl text-sm tracking-widest uppercase">
+            Iniciar Cálculo Otimizado
           </button>
-          <p id="emptyWarning" class="font-mono text-xs text-[var(--red)] mt-2 hidden">Adicione ao menos um item válido para calcular.</p>
+          <p id="emptyWarning" class="font-mono text-xs text-[var(--danger)] mt-3 hidden text-center">Adicione ao menos um item válido.</p>
 
-          <div class="divider-dash my-5"></div>
+          <div class="divider-dash my-6"></div>
 
           <p class="stamp-label mb-2">Etapa 02</p>
-          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Número do Contrato</label>
-          <input id="contractNumberInput" type="text" placeholder="ex: CT-2026-014" class="w-full rounded px-3 py-2 text-sm mb-2" disabled />
-          <button id="launchContractBtn" class="btn-amber w-full py-3 rounded text-base uppercase" disabled>
-            Lançar Contrato
+          <label class="font-mono text-xs text-[var(--text-dim)] block mb-1">Registro no Sistema</label>
+          <input id="contractNumberInput" type="text" placeholder="ex: JOB-2026-X" class="w-full rounded-lg px-3 py-2.5 text-sm mb-3" disabled />
+          <button id="launchContractBtn" class="btn-ghost w-full py-3 rounded-lg text-sm tracking-widest uppercase" disabled>
+            Gravar Contrato
           </button>
-          <p class="font-mono text-[11px] text-[var(--ink-dim)] mt-2">Calcule o contrato antes de lançar. Ao lançar, o estoque disponível é deduzido e o contrato entra "Em Andamento".</p>
-          <p id="launchWarning" class="font-mono text-xs text-[var(--red)] mt-2 hidden"></p>
+          <p class="font-mono text-[11px] text-[var(--text-dim)] mt-3 text-center">Calcule a operação antes de gravar. O estoque será deduzido instantaneamente.</p>
+          <p id="launchWarning" class="font-mono text-xs text-[var(--danger)] mt-2 hidden text-center"></p>
         </div>
 
         <!-- Painel: Estoque -->
         <div id="tabEstoque" class="hidden">
-          <p class="stamp-label mb-1">Depósito</p>
-          <h2 class="font-display text-xl font-600 text-white mb-1">Estoque Atual</h2>
-          <p class="font-mono text-xs text-[var(--ink-dim)] mb-3">Quantidades salvas automaticamente no navegador.</p>
+          <p class="stamp-label mb-1">Armazenamento Local</p>
+          <h2 class="font-display text-2xl font-600 text-white mb-2">Inventário</h2>
+          <p class="font-mono text-[11px] text-[var(--text-dim)] mb-4">Sincronizado automaticamente no cache do navegador.</p>
 
-          <input id="stockSearch" type="text" placeholder="Buscar item..." class="w-full rounded px-3 py-2 text-sm mb-3" />
+          <input id="stockSearch" type="text" placeholder="Filtrar componentes..." class="w-full rounded-lg px-3 py-2.5 text-sm mb-4" />
 
-          <div id="stockList" class="space-y-1.5 max-h-[38vh] overflow-y-auto scroll-thin pr-1"></div>
+          <div id="stockList" class="space-y-2 max-h-[38vh] overflow-y-auto scroll-thin pr-2"></div>
 
-          <div class="divider-dash my-4"></div>
+          <div class="divider-dash my-5"></div>
 
-          <p class="stamp-label mb-2">Novo Item</p>
+          <p class="stamp-label mb-2">Entrada Manual</p>
           <div class="flex items-center gap-2 mb-1">
-            <input id="customItemInput" type="text" placeholder="Nome do item (ex: Fio de Ouro)" class="flex-1 min-w-0 rounded px-3 py-2 text-sm" />
-            <button id="addCustomItemBtn" class="btn-ghost px-3 py-2 rounded text-sm font-mono shrink-0">+ Adicionar</button>
+            <input id="customItemInput" type="text" placeholder="Nome do item..." class="flex-1 min-w-0 rounded-lg px-3 py-2.5 text-sm" />
+            <button id="addCustomItemBtn" class="btn-ghost px-4 py-2.5 rounded-lg text-sm font-mono shrink-0">+</button>
           </div>
-          <p class="font-mono text-[11px] text-[var(--ink-dim)] mb-3">Para itens sem receita cadastrada que você só quer controlar no estoque.</p>
-          <p id="customItemWarning" class="font-mono text-xs text-[var(--red)] mb-3 hidden"></p>
+          <p id="customItemWarning" class="font-mono text-xs text-[var(--danger)] mb-3 hidden"></p>
 
-          <div class="divider-dash my-4"></div>
+          <div class="divider-dash my-5"></div>
           <div class="flex items-center gap-3">
-            <button id="clearStockBtn" class="btn-ghost flex-1 py-2 rounded text-sm font-mono">Zerar Estoque</button>
-            <span id="stockSavedFlash" class="flash-msg font-mono text-xs text-[var(--green)] opacity-0">Estoque salvo ✓</span>
+            <button id="clearStockBtn" class="btn-ghost flex-1 py-2.5 rounded-lg text-sm font-mono border-[var(--danger)] text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white">Wipe Geral</button>
+            <span id="stockSavedFlash" class="flash-msg font-mono text-xs text-[var(--success)] opacity-0">Sincronizado ✓</span>
           </div>
         </div>
 
         <!-- Painel: Novas Receitas -->
         <div id="tabReceitas" class="hidden">
           <p class="stamp-label mb-1">Engenharia</p>
-          <h2 id="recipeFormTitle" class="font-display text-xl font-600 text-white mb-4">Cadastrar Receita</h2>
+          <h2 id="recipeFormTitle" class="font-display text-2xl font-600 text-white mb-5">Programar Nova Peça</h2>
 
-          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Nome do Item Resultante</label>
-          <input id="recipeNameInput" type="text" placeholder="Ex: Placa de Titânio" class="w-full rounded px-3 py-2 text-sm mb-3" />
+          <label class="font-mono text-xs text-[var(--text-dim)] block mb-1">Output (Item Final)</label>
+          <input id="recipeNameInput" type="text" placeholder="Ex: Placa de Titânio" class="w-full rounded-lg px-3 py-2.5 text-sm mb-4" />
 
-          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Máquina Utilizada</label>
-          <input id="recipeMachineInput" type="text" list="machineListOptions" placeholder="Ex: Estação de Fabricação" class="w-full rounded px-3 py-2 text-sm mb-4" />
+          <label class="font-mono text-xs text-[var(--text-dim)] block mb-1">Máquina Alocada</label>
+          <input id="recipeMachineInput" type="text" list="machineListOptions" placeholder="Ex: Estação de Fabricação" class="w-full rounded-lg px-3 py-2.5 text-sm mb-5" />
 
-          <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Ingredientes (Custo por unidade)</label>
-          <div id="recipeIngredients" class="space-y-2 mb-3 max-h-[20vh] overflow-y-auto scroll-thin pr-1"></div>
+          <label class="font-mono text-xs text-[var(--text-dim)] block mb-1">Input (Ingredientes)</label>
+          <div id="recipeIngredients" class="space-y-2 mb-3 max-h-[20vh] overflow-y-auto scroll-thin pr-2"></div>
           
-          <button id="addIngredientBtn" class="btn-ghost w-full py-2 rounded text-sm font-mono flex items-center justify-center gap-2 mb-4">
-            <span class="text-lg leading-none">+</span> Adicionar Ingrediente
+          <button id="addIngredientBtn" class="btn-ghost w-full py-2.5 rounded-lg text-sm font-mono flex items-center justify-center gap-2 mb-5">
+            <span class="text-lg leading-none">+</span> Slot de Ingrediente
           </button>
 
-          <p id="recipeWarning" class="font-mono text-xs text-[var(--red)] mb-3 hidden"></p>
+          <p id="recipeWarning" class="font-mono text-xs text-[var(--danger)] mb-3 hidden"></p>
 
-          <div class="flex gap-2">
-            <button id="cancelEditBtn" class="btn-ghost flex-1 py-3 rounded text-base hidden">Cancelar Edição</button>
-            <button id="saveRecipeBtn" class="btn-amber flex-1 py-3 rounded text-base uppercase">Salvar Receita</button>
+          <div class="flex gap-3">
+            <button id="cancelEditBtn" class="btn-ghost flex-1 py-3 rounded-lg text-sm hidden">Cancelar</button>
+            <button id="saveRecipeBtn" class="btn-neon flex-1 py-3 rounded-lg text-sm tracking-wide uppercase">Salvar Receita</button>
           </div>
 
           <!-- Módulo de Renomeação em Massa -->
-          <div class="divider-dash my-5"></div>
-          <div class="blueprint-panel corners p-4 mb-4">
-            <p class="stamp-label mb-1">Manutenção</p>
-            <h3 class="font-display text-lg font-600 text-white mb-2">Renomear Item no Sistema</h3>
-            <p class="font-mono text-[11px] text-[var(--ink-dim)] mb-3">Isso atualizará o nome no estoque e nas receitas automaticamente.</p>
-            <div class="flex flex-col sm:flex-row items-center gap-2 mb-2">
-              <input type="text" id="renameOldInput" list="allIngredientsList" placeholder="Nome atual (ex: Carvão)" class="w-full sm:flex-1 rounded px-3 py-2 text-sm" />
-              <span class="text-[var(--ink-dim)] hidden sm:block">→</span>
-              <input type="text" id="renameNewInput" placeholder="Novo nome" class="w-full sm:flex-1 rounded px-3 py-2 text-sm" />
+          <div class="divider-dash my-6"></div>
+          <div class="glass-card mb-4 border border-[var(--neon-purple)] shadow-[0_0_15px_rgba(192,132,252,0.1)]">
+            <p class="stamp-label mb-1">Refatoração de Sistema</p>
+            <h3 class="font-display text-lg font-600 text-white mb-2">Renomear Variável Global</h3>
+            <p class="font-mono text-[11px] text-[var(--text-dim)] mb-4">Atualiza o nome no estoque e cascateia por todas as receitas dependentes.</p>
+            <div class="flex flex-col gap-2 mb-3">
+              <input type="text" id="renameOldInput" list="allIngredientsList" placeholder="Nome atual (ex: Carvão)" class="w-full rounded-lg px-3 py-2.5 text-sm" />
+              <div class="text-[var(--neon-purple)] text-center text-xs">▼</div>
+              <input type="text" id="renameNewInput" placeholder="Novo nome" class="w-full rounded-lg px-3 py-2.5 text-sm" />
             </div>
-            <button id="renameItemBtn" class="btn-ghost w-full py-2 rounded text-sm font-mono mt-1">Confirmar Renomeação</button>
-            <p id="renameWarning" class="font-mono text-xs text-[var(--red)] mt-2 hidden"></p>
-            <span id="renameFlash" class="flash-msg font-mono text-xs text-[var(--green)] mt-2 block opacity-0">Item renomeado com sucesso ✓</span>
+            <button id="renameItemBtn" class="btn-ghost border-[var(--neon-purple)] text-[var(--neon-purple)] w-full py-2.5 rounded-lg text-sm font-mono mt-1">Executar Refatoração</button>
+            <p id="renameWarning" class="font-mono text-xs text-[var(--danger)] mt-2 hidden text-center"></p>
+            <span id="renameFlash" class="flash-msg font-mono text-xs text-[var(--success)] mt-2 block opacity-0 text-center">Refatoração concluída ✓</span>
           </div>
           
-          <div class="flex items-center justify-between mb-2">
-            <p class="stamp-label">Receitas Personalizadas</p>
-            <span id="customRecipeCount" class="font-mono text-xs text-[var(--amber)]"></span>
+          <div class="flex items-center justify-between mb-3 mt-6">
+            <p class="stamp-label">Scripts Personalizados</p>
+            <span id="customRecipeCount" class="font-mono text-xs text-[var(--neon-cyan)]"></span>
           </div>
-          <div id="customRecipesList" class="space-y-2 max-h-[30vh] overflow-y-auto scroll-thin pr-1"></div>
-          <p id="customRecipesEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Nenhuma receita personalizada cadastrada.</p>
+          <div id="customRecipesList" class="space-y-3 max-h-[30vh] overflow-y-auto scroll-thin pr-2"></div>
+          <p id="customRecipesEmpty" class="font-mono text-sm text-[var(--text-dim)]">Nenhuma receita injetada.</p>
         </div>
 
         <!-- Painel: Contratos lançados -->
         <div id="tabContratos" class="hidden">
-          <p class="stamp-label mb-1">Histórico</p>
-          <h2 class="font-display text-xl font-600 text-white mb-3">Contratos Lançados</h2>
-          <div id="contractsList" class="space-y-3 max-h-[52vh] overflow-y-auto scroll-thin pr-1"></div>
-          <p id="contractsEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Nenhum contrato lançado ainda.</p>
+          <p class="stamp-label mb-1">Logs de Sistema</p>
+          <h2 class="font-display text-2xl font-600 text-white mb-4">Operações Registradas</h2>
+          <div id="contractsList" class="space-y-4 max-h-[60vh] overflow-y-auto scroll-thin pr-2"></div>
+          <p id="contractsEmpty" class="font-mono text-sm text-[var(--text-dim)]">Nenhum log encontrado.</p>
         </div>
 
       </div>
@@ -409,48 +452,48 @@
     <section class="lg:col-span-3 space-y-6">
 
       <!-- Report table -->
-      <div class="blueprint-panel corners p-5">
-        <p class="stamp-label mb-1">Resultado A</p>
-        <h2 class="font-display text-xl font-600 text-white mb-3">Relatório do Contrato</h2>
+      <div class="glass-panel p-6">
+        <p class="stamp-label mb-1">Módulo A</p>
+        <h2 class="font-display text-2xl font-600 text-white mb-4">Análise de Requisitos</h2>
         <div class="overflow-x-auto scroll-thin">
           <table class="report-table">
             <thead>
               <tr>
-                <th>Item</th>
+                <th>Componente</th>
                 <th>Necessário</th>
-                <th>Possui no Estoque</th>
-                <th>Falta Produzir / Coletar</th>
+                <th>Em Cache (Estoque)</th>
+                <th>Falta Fabricar/Extrair</th>
               </tr>
             </thead>
             <tbody id="reportBody"></tbody>
           </table>
         </div>
-        <p id="reportEmpty" class="font-mono text-sm text-[var(--ink-dim)] mt-2">Ainda não calculado.</p>
+        <p id="reportEmpty" class="font-mono text-sm text-[var(--text-dim)] mt-3">Aguardando compilação.</p>
       </div>
 
       <!-- Raw materials -->
-      <div class="blueprint-panel corners p-5">
-        <p class="stamp-label mb-1">Resultado B</p>
-        <h2 class="font-display text-xl font-600 text-white mb-3">Matérias-Primas Brutas a Coletar</h2>
-        <div id="rawList" class="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-sm"></div>
-        <p id="rawEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Ainda não calculado.</p>
+      <div class="glass-panel p-6">
+        <p class="stamp-label mb-1">Módulo B</p>
+        <h2 class="font-display text-2xl font-600 text-white mb-4">Extração Base Necessária</h2>
+        <div id="rawList" class="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-sm"></div>
+        <p id="rawEmpty" class="font-mono text-sm text-[var(--text-dim)]">Aguardando compilação.</p>
       </div>
 
       <!-- Etapas de Produção -->
-      <div class="blueprint-panel corners p-5">
-        <p class="stamp-label mb-1">Resultado C</p>
-        <h2 class="font-display text-xl font-600 text-white mb-1">Etapas de Produção</h2>
-        <p class="font-mono text-xs text-[var(--ink-dim)] mb-4">Ordem de fabricação: comece pela Etapa 1 (usa só matéria-prima) e siga até o item final.</p>
-        <div id="stagesList" class="space-y-6"></div>
-        <p id="interEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Ainda não calculado.</p>
+      <div class="glass-panel p-6">
+        <p class="stamp-label mb-1">Módulo C</p>
+        <h2 class="font-display text-2xl font-600 text-white mb-1">Pipeline de Fabricação</h2>
+        <p class="font-mono text-xs text-[var(--text-dim)] mb-6">Fluxo estruturado: inicie no Tier 1 e suba na cadeia de montagem.</p>
+        <div id="stagesList" class="space-y-8"></div>
+        <p id="interEmpty" class="font-mono text-sm text-[var(--text-dim)]">Aguardando compilação.</p>
       </div>
 
       <!-- Machine usage -->
-      <div class="blueprint-panel corners p-5">
-        <p class="stamp-label mb-1">Resultado D</p>
-        <h2 class="font-display text-xl font-600 text-white mb-3">Processamentos por Máquina</h2>
-        <div id="machineList" class="space-y-4"></div>
-        <p id="machineEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Ainda não calculado.</p>
+      <div class="glass-panel p-6">
+        <p class="stamp-label mb-1">Módulo D</p>
+        <h2 class="font-display text-2xl font-600 text-white mb-4">Carga de Hardware (Máquinas)</h2>
+        <div id="machineList" class="space-y-5"></div>
+        <p id="machineEmpty" class="font-mono text-sm text-[var(--text-dim)]">Aguardando compilação.</p>
       </div>
 
     </section>
@@ -521,7 +564,6 @@ let STAGE_MAP = {};
 let editingRecipeIndex = -1; // -1 significa criando nova, >=0 significa editando
 
 function initData() {
-  // Mescla receitas base e personalizadas (personalizada sobrepõe base com mesmo nome)
   const baseMap = {};
   DEFAULT_RECEITAS.forEach(r => { baseMap[r.item.toLowerCase()] = r; });
   CUSTOM_RECIPES.forEach(r => { baseMap[r.item.toLowerCase()] = r; });
@@ -538,7 +580,7 @@ function initData() {
   STAGE_MAP = {};
   CRAFTABLE_ITEMS.forEach(item => computeStage(item, new Set()));
 
-  document.getElementById('recipeCount').textContent = `${ALL_RECEITAS.length} RECEITAS CARREGADAS`;
+  document.getElementById('recipeCount').textContent = `${ALL_RECEITAS.length} RECEITAS PRONTAS`;
 
   updateDatalist();
   updateContractSelects();
@@ -560,7 +602,6 @@ function updateContractSelects() {
   selects.forEach(sel => {
     const currentVal = sel.value;
     sel.innerHTML = optionsHtml(currentVal);
-    // Tenta manter a seleção
     if (CRAFTABLE_ITEMS.includes(currentVal)) {
       sel.value = currentVal;
     } else if (CRAFTABLE_ITEMS.length > 0) {
@@ -612,7 +653,7 @@ function loadStock(){
 function saveStock(stock){
   try{
     localStorage.setItem(STOCK_KEY, JSON.stringify(stock));
-    flashMsg('stockSavedFlash', 'Estoque salvo ✓');
+    flashMsg('stockSavedFlash', 'Sincronizado ✓');
   }catch(e){}
 }
 function loadContracts(){
@@ -628,11 +669,11 @@ function showConfirm(message, onConfirm){
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
-    <div class="blueprint-panel corners modal-box p-5">
-      <p class="font-mono text-sm text-[var(--ink)] leading-relaxed mb-5">${message}</p>
+    <div class="glass-panel modal-box p-6">
+      <p class="font-mono text-sm text-[var(--text-main)] leading-relaxed mb-6 text-center">${message}</p>
       <div class="flex gap-3">
-        <button id="modalCancelBtn" class="btn-ghost flex-1 py-2 rounded text-sm font-mono">Cancelar</button>
-        <button id="modalConfirmBtn" class="btn-amber flex-1 py-2 rounded text-sm uppercase">Confirmar</button>
+        <button id="modalCancelBtn" class="btn-ghost flex-1 py-2.5 rounded-lg text-sm font-mono border-[var(--border-panel)]">Cancelar</button>
+        <button id="modalConfirmBtn" class="btn-neon flex-1 py-2.5 rounded-lg text-sm uppercase">Confirmar</button>
       </div>
     </div>
   `;
@@ -658,12 +699,8 @@ function flashMsg(elId, text){
 function renameItemGlobally(oldName, newName) {
   if (!oldName || !newName || oldName === newName) return;
 
-  // 1. Clona as receitas padrão afetadas (que usam oldName) para as Personalizadas
-  // Isso evita quebrar a árvore base se um item padrão for renomeado.
   DEFAULT_RECEITAS.forEach(defRecipe => {
-    // Se a receita já foi sobrescrita na custom, pula
     if (CUSTOM_RECIPES.some(cr => cr.item.toLowerCase() === defRecipe.item.toLowerCase())) return; 
-    
     const needsClone = (defRecipe.item.toLowerCase() === oldName.toLowerCase()) || 
                        defRecipe.custo.some(c => c.item.toLowerCase() === oldName.toLowerCase());
     if (needsClone) {
@@ -672,7 +709,6 @@ function renameItemGlobally(oldName, newName) {
     }
   });
 
-  // 2. Aplica a renomeação em todas as Receitas Personalizadas
   let modifiedRecipes = false;
   CUSTOM_RECIPES.forEach(r => {
     if (r.item.toLowerCase() === oldName.toLowerCase()) {
@@ -688,7 +724,6 @@ function renameItemGlobally(oldName, newName) {
   });
   if (modifiedRecipes) saveCustomRecipes(CUSTOM_RECIPES);
 
-  // 3. Atualiza no Estoque
   const stockKeys = Object.keys(STOCK);
   const oldKey = stockKeys.find(k => k.toLowerCase() === oldName.toLowerCase());
   if (oldKey) {
@@ -697,7 +732,6 @@ function renameItemGlobally(oldName, newName) {
     saveStock(STOCK);
   }
 
-  // 4. Atualiza na lista de Itens Personalizados
   const customIdx = CUSTOM_ITEMS.findIndex(i => i.toLowerCase() === oldName.toLowerCase());
   if (customIdx > -1) {
     CUSTOM_ITEMS[customIdx] = newName;
@@ -715,7 +749,7 @@ document.getElementById('renameItemBtn').addEventListener('click', () => {
   const newName = document.getElementById('renameNewInput').value.trim();
 
   if (!oldName || !newName) {
-    warning.textContent = 'Preencha os dois campos.';
+    warning.textContent = 'Parâmetros incompletos.';
     warning.classList.remove('hidden'); return;
   }
   
@@ -723,12 +757,12 @@ document.getElementById('renameItemBtn').addEventListener('click', () => {
   const oldReal = allKnown.find(i => i.toLowerCase() === oldName.toLowerCase());
   
   if (!oldReal) {
-    warning.textContent = 'O item atual não foi encontrado no sistema.';
+    warning.textContent = 'Variável não encontrada no sistema.';
     warning.classList.remove('hidden'); return;
   }
   
   if (allKnown.some(i => i.toLowerCase() === newName.toLowerCase() && i.toLowerCase() !== oldReal.toLowerCase())) {
-    warning.textContent = 'O novo nome já existe no sistema.';
+    warning.textContent = 'Conflito: nome já está em uso.';
     warning.classList.remove('hidden'); return;
   }
 
@@ -737,7 +771,7 @@ document.getElementById('renameItemBtn').addEventListener('click', () => {
   
   document.getElementById('renameOldInput').value = '';
   document.getElementById('renameNewInput').value = '';
-  flashMsg('renameFlash', 'Item renomeado com sucesso ✓');
+  flashMsg('renameFlash', 'Refatoração concluída ✓');
 });
 
 /* ---------- Resolução do Cálculo ---------- */
@@ -821,11 +855,11 @@ function addRow(defaultItem, defaultQty){
   wrap.className = 'flex items-center gap-2 fade-up';
   wrap.id = `row-${rowId}`;
   wrap.innerHTML = `
-    <select class="item-select flex-1 min-w-0 rounded px-2 py-2 text-sm">
+    <select class="item-select flex-1 min-w-0 rounded-lg px-2 py-2.5 text-sm">
       ${optionsHtml(defaultItem)}
     </select>
-    <input type="number" min="1" value="${defaultQty || 1}" class="qty-input w-20 rounded px-2 py-2 text-sm text-right" />
-    <button class="row-remove px-2 py-2 text-lg leading-none" title="Remover item">✕</button>
+    <input type="number" min="1" value="${defaultQty || 1}" class="qty-input w-20 rounded-lg px-2 py-2.5 text-sm text-right" />
+    <button class="row-remove px-2 py-2 text-xl leading-none" title="Remover item">✕</button>
   `;
   wrap.querySelector('.row-remove').addEventListener('click', () => { wrap.remove(); invalidateCalculation(); });
   wrap.querySelector('.item-select').addEventListener('change', invalidateCalculation);
@@ -845,21 +879,21 @@ function renderStockList(filterText){
 
   items.forEach(name => {
     const row = document.createElement('div');
-    row.className = 'flex items-center justify-between gap-2 py-1';
+    row.className = 'flex items-center justify-between gap-3 py-1.5';
     
     const isRecipe = !!RECIPE_MAP[name];
     const isCustomRaw = !isRecipe && CUSTOM_ITEMS.includes(name);
-    const tag = isRecipe ? '· fabricado' : (isCustomRaw ? '· personalizado' : '· bruto');
+    const tag = isRecipe ? '· fab' : (isCustomRaw ? '· mod' : '· base');
     
     row.innerHTML = `
       <span class="text-sm truncate pr-2">
         ${name}
-        <span class="stamp-label ml-1">${tag}</span>
+        <span class="stamp-label ml-2 opacity-60">${tag}</span>
       </span>
       <div class="flex items-center gap-1 shrink-0">
         <input type="number" min="0" data-item="${name}" value="${STOCK[name] || 0}"
-          class="stock-input w-24 rounded px-2 py-1.5 text-sm text-right" />
-        ${isCustomRaw ? `<button class="row-remove px-1 text-base leading-none" data-remove-custom="${name}" title="Remover item personalizado">✕</button>` : ''}
+          class="stock-input w-20 sm:w-24 rounded-lg px-2 py-1.5 text-sm text-right" />
+        ${isCustomRaw ? `<button class="row-remove px-2 py-1 text-lg leading-none" data-remove-custom="${name}" title="Remover variável">✕</button>` : ''}
       </div>
     `;
     stockListEl.appendChild(row);
@@ -878,7 +912,7 @@ function renderStockList(filterText){
   stockListEl.querySelectorAll('[data-remove-custom]').forEach(btn => {
     btn.addEventListener('click', () => {
       const name = btn.dataset.removeCustom;
-      showConfirm(`Remover "${name}" da lista de estoque? A quantidade guardada dele também será apagada.`, () => {
+      showConfirm(`Excluir a variável "${name}"? Os dados associados em cache serão destruídos.`, () => {
         CUSTOM_ITEMS = CUSTOM_ITEMS.filter(n => n !== name);
         saveCustomItems(CUSTOM_ITEMS);
         delete STOCK[name];
@@ -897,11 +931,11 @@ document.getElementById('addCustomItemBtn').addEventListener('click', () => {
   const name = input.value.trim();
 
   if (!name){
-    warning.textContent = 'Digite um nome para o item.';
+    warning.textContent = 'Defina o nome da variável.';
     warning.classList.remove('hidden'); return;
   }
   if (getAllStockItems().some(n => n.toLowerCase() === name.toLowerCase())){
-    warning.textContent = 'Esse item já está no estoque.';
+    warning.textContent = 'Variável já existe em memória.';
     warning.classList.remove('hidden'); return;
   }
   warning.classList.add('hidden');
@@ -914,7 +948,7 @@ document.getElementById('addCustomItemBtn').addEventListener('click', () => {
 });
 
 document.getElementById('clearStockBtn').addEventListener('click', () => {
-  showConfirm('Zerar todas as quantidades em estoque?', () => {
+  showConfirm('ATENÇÃO: Deseja realmente zerar todo o cache de inventário?', () => {
     STOCK = {};
     saveStock(STOCK);
     renderStockList(document.getElementById('stockSearch').value);
@@ -930,9 +964,9 @@ function addIngredientRow(defaultName = '', defaultQty = 1) {
   const wrap = document.createElement('div');
   wrap.className = 'flex items-center gap-2 fade-up recipe-ingredient-row';
   wrap.innerHTML = `
-    <input type="text" list="allIngredientsList" placeholder="Ex: Cobre" class="ing-name flex-1 min-w-0 rounded px-2 py-2 text-sm" value="${defaultName}" />
-    <input type="number" min="1" placeholder="Qtd" class="ing-qty w-20 rounded px-2 py-2 text-sm text-right" value="${defaultQty}" />
-    <button class="row-remove px-2 py-2 text-lg leading-none" title="Remover ingrediente">✕</button>
+    <input type="text" list="allIngredientsList" placeholder="Ex: Cobre" class="ing-name flex-1 min-w-0 rounded-lg px-2 py-2.5 text-sm" value="${defaultName}" />
+    <input type="number" min="1" placeholder="Qtd" class="ing-qty w-20 rounded-lg px-2 py-2.5 text-sm text-right" value="${defaultQty}" />
+    <button class="row-remove px-2 py-2 text-xl leading-none" title="Remover slot">✕</button>
   `;
   wrap.querySelector('.row-remove').addEventListener('click', () => wrap.remove());
   recipeIngredientsEl.appendChild(wrap);
@@ -942,7 +976,7 @@ document.getElementById('addIngredientBtn').addEventListener('click', () => addI
 
 function cancelEdit() {
   editingRecipeIndex = -1;
-  document.getElementById('recipeFormTitle').textContent = 'Cadastrar Receita';
+  document.getElementById('recipeFormTitle').textContent = 'Programar Nova Peça';
   document.getElementById('recipeNameInput').value = '';
   document.getElementById('recipeMachineInput').value = '';
   recipeIngredientsEl.innerHTML = '';
@@ -959,15 +993,14 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   const machine = document.getElementById('recipeMachineInput').value.trim();
 
   if(!name || !machine) {
-    warning.textContent = 'Nome do item e Máquina são obrigatórios.';
+    warning.textContent = 'Parâmetros (Nome/Máquina) inválidos.';
     warning.classList.remove('hidden'); return;
   }
 
-  // Verifica duplicidade se NÃO for uma edição do mesmo item
   const exists = ALL_RECEITAS.some(r => r.item.toLowerCase() === name.toLowerCase());
   if(exists) {
     if (editingRecipeIndex === -1 || CUSTOM_RECIPES[editingRecipeIndex].item.toLowerCase() !== name.toLowerCase()) {
-      warning.textContent = 'Já existe uma receita para este item (edite ou apague a existente primeiro).';
+      warning.textContent = 'Conflito de script: já existe um arquivo com esse nome final.';
       warning.classList.remove('hidden'); return;
     }
   }
@@ -984,7 +1017,7 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   });
 
   if(custo.length === 0) {
-    warning.textContent = 'Adicione pelo menos 1 ingrediente válido (com quantidade > 0).';
+    warning.textContent = 'Pipeline vazio: adicione pelo menos 1 slot válido.';
     warning.classList.remove('hidden'); return;
   }
 
@@ -994,7 +1027,6 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   if (editingRecipeIndex > -1) {
     const oldName = CUSTOM_RECIPES[editingRecipeIndex].item;
     if (oldName.toLowerCase() !== name.toLowerCase()) {
-      // O usuário editou o NOME do item de saída. Devemos refatorar a árvore!
       renameItemGlobally(oldName, name);
     }
     CUSTOM_RECIPES[editingRecipeIndex] = newRecipe;
@@ -1006,7 +1038,7 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   cancelEdit();
   initData();
   invalidateCalculation();
-  flashMsg('customRecipeCount', 'Receita Salva!');
+  flashMsg('customRecipeCount', 'Script injetado!');
 });
 
 function renderCustomRecipesList() {
@@ -1026,19 +1058,19 @@ function renderCustomRecipesList() {
 
   CUSTOM_RECIPES.forEach((recipe, index) => {
     const card = document.createElement('div');
-    card.className = 'recipe-card fade-up flex justify-between items-start';
+    card.className = 'glass-card fade-up flex justify-between items-start';
     
-    const ingredientsHtml = recipe.custo.map(c => `${c.quantidade}x ${c.item}`).join(' + ');
+    const ingredientsHtml = recipe.custo.map(c => `<span class="text-[var(--neon-cyan)]">${c.quantidade}x</span> ${c.item}`).join(' <span class="text-[var(--text-dim)]">+</span> ');
     
     card.innerHTML = `
-      <div class="flex-1 pr-2">
-        <div class="font-display text-white text-base">${recipe.item}</div>
-        <div class="stamp-label mb-1">${recipe.maquina}</div>
-        <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed">${ingredientsHtml}</div>
+      <div class="flex-1 pr-3">
+        <div class="font-display text-white text-lg font-600">${recipe.item}</div>
+        <div class="stamp-label mb-2">${recipe.maquina}</div>
+        <div class="font-mono text-xs text-[var(--text-main)] leading-relaxed">${ingredientsHtml}</div>
       </div>
-      <div class="flex flex-col gap-1 shrink-0">
-        <button class="btn-mini mini-amber px-2 py-1" data-edit-recipe="${index}" title="Editar Receita">Editar</button>
-        <button class="btn-mini mini-red px-2 py-1" data-del-recipe="${index}" title="Excluir Receita">Excluir</button>
+      <div class="flex flex-col gap-2 shrink-0">
+        <button class="btn-mini mini-amber px-2 py-1.5" data-edit-recipe="${index}" title="Modificar">EDIT</button>
+        <button class="btn-mini mini-red px-2 py-1.5" data-del-recipe="${index}" title="Excluir">DEL</button>
       </div>
     `;
     listEl.appendChild(card);
@@ -1050,16 +1082,16 @@ function renderCustomRecipesList() {
       const recipe = CUSTOM_RECIPES[idx];
       editingRecipeIndex = parseInt(idx, 10);
       
-      document.getElementById('recipeFormTitle').textContent = 'Editar Receita';
+      document.getElementById('recipeFormTitle').textContent = 'Modificar Script';
       document.getElementById('recipeNameInput').value = recipe.item;
       document.getElementById('recipeMachineInput').value = recipe.maquina;
       
       recipeIngredientsEl.innerHTML = '';
       recipe.custo.forEach(c => addIngredientRow(c.item, c.quantidade));
       
-      document.getElementById('saveRecipeBtn').textContent = 'Salvar Alterações';
+      document.getElementById('saveRecipeBtn').textContent = 'Atualizar';
       document.getElementById('cancelEditBtn').classList.remove('hidden');
-      document.getElementById('tabReceitasBtn').click(); // foca na tab caso precise
+      document.getElementById('tabReceitasBtn').click();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
@@ -1068,7 +1100,7 @@ function renderCustomRecipesList() {
     btn.addEventListener('click', () => {
       const idx = btn.dataset.delRecipe;
       const rName = CUSTOM_RECIPES[idx].item;
-      showConfirm(`Excluir a receita de "${rName}"? Isso afetará cálculos futuros.`, () => {
+      showConfirm(`Excluir o script de "${rName}" permanentemente?`, () => {
         CUSTOM_RECIPES.splice(idx, 1);
         saveCustomRecipes(CUSTOM_RECIPES);
         initData();
@@ -1085,9 +1117,9 @@ let lastCtx = null;
 
 function badgeFor(necessario, usado){
   const falta = necessario - usado;
-  if (falta <= 0) return `<span class="badge badge-green">Suficiente</span>`;
-  if (usado > 0) return `<span class="badge badge-yellow">Parcial</span>`;
-  return `<span class="badge badge-red">Falta tudo</span>`;
+  if (falta <= 0) return `<span class="badge badge-green">OK</span>`;
+  if (usado > 0) return `<span class="badge badge-yellow">PARCIAL</span>`;
+  return `<span class="badge badge-red">FALTA</span>`;
 }
 
 function renderReport(ctx){
@@ -1105,9 +1137,9 @@ function renderReport(ctx){
     const tr = document.createElement('tr');
     tr.className = 'fade-up';
     tr.innerHTML = `
-      <td class="text-[var(--ink)]">${e.name}<span class="stamp-label ml-2">${e.tipo === 'bruto' ? 'bruto' : 'fabricado'}</span></td>
-      <td>${fmt(e.necessario)}</td>
-      <td class="text-[var(--green)]">${fmt(e.usado)}</td>
+      <td class="text-[var(--text-main)]">${e.name}<span class="stamp-label ml-2 opacity-60">${e.tipo === 'bruto' ? 'BASE' : 'FAB'}</span></td>
+      <td class="text-[var(--neon-purple)]">${fmt(e.necessario)}</td>
+      <td class="text-[var(--success)]">${fmt(e.usado)}</td>
       <td class="flex items-center gap-2"><span>${fmt(e.falta)}</span> ${badgeFor(e.necessario, e.usado)}</td>
     `;
     body.appendChild(tr);
@@ -1140,38 +1172,38 @@ function renderStages(ctx){
     block.innerHTML = `<div class="stage-dot"></div>`;
 
     const header = document.createElement('div');
-    header.className = 'flex items-center gap-2 mb-3';
+    header.className = 'flex items-center gap-3 mb-4';
     header.innerHTML = `
-      <span class="badge-stage">Etapa ${stageNum}</span>
-      <span class="stamp-label">${items.length} fabricação${items.length > 1 ? 'ões' : ''} nesta etapa</span>
+      <span class="badge-stage">Tier ${stageNum}</span>
+      <span class="stamp-label opacity-70">${items.length} processamento(s)</span>
     `;
     block.appendChild(header);
 
     const cardsWrap = document.createElement('div');
-    cardsWrap.className = 'space-y-2';
+    cardsWrap.className = 'space-y-3';
 
     items.forEach(({ name, qty }) => {
       const recipe = RECIPE_MAP[name];
       const receitaPorUnidade = recipe.custo
-        .map(c => `${fmt(c.quantidade)}× ${c.item}`)
-        .join(' + ');
+        .map(c => `<span class="text-[var(--neon-cyan)]">${fmt(c.quantidade)}x</span> ${c.item}`)
+        .join(' <span class="text-[var(--text-dim)]">+</span> ');
       const consumoTotal = recipe.custo
-        .map(c => `${fmt(c.quantidade * qty)}× ${c.item}`)
-        .join(' + ');
+        .map(c => `<span class="text-[var(--neon-cyan)]">${fmt(c.quantidade * qty)}x</span> ${c.item}`)
+        .join(' <span class="text-[var(--text-dim)]">+</span> ');
 
       const card = document.createElement('div');
-      card.className = 'recipe-card';
+      card.className = 'glass-card';
       card.innerHTML = `
-        <div class="flex items-center justify-between gap-2 mb-1">
-          <span class="font-display text-white text-base">${name}</span>
-          <span class="font-mono text-[var(--amber)] font-600 shrink-0">fabricar ${fmt(qty)}×</span>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <span class="font-display text-white text-lg font-600">${name}</span>
+          <span class="font-mono text-[var(--neon-purple)] font-700 shrink-0 border border-[rgba(192,132,252,0.3)] bg-[rgba(192,132,252,0.1)] px-2 py-1 rounded">EXEC ${fmt(qty)}x</span>
         </div>
-        <div class="stamp-label mb-2">${recipe.maquina}</div>
-        <div class="font-mono text-xs text-[var(--ink)] leading-relaxed">
-          ${receitaPorUnidade} <span class="recipe-arrow">→</span> 1× ${name}
+        <div class="stamp-label mb-3">${recipe.maquina}</div>
+        <div class="font-mono text-xs text-[var(--text-main)] leading-relaxed">
+          ${receitaPorUnidade} <span class="recipe-arrow mx-1">→</span> 1x ${name}
         </div>
-        <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed mt-1">
-          Total para esta etapa: ${consumoTotal}
+        <div class="font-mono text-xs text-[var(--text-dim)] leading-relaxed mt-2 border-t border-[var(--border-panel)] pt-2">
+          Lote completo: ${consumoTotal}
         </div>
       `;
       cardsWrap.appendChild(card);
@@ -1194,8 +1226,8 @@ function renderResults(ctx){
     rawEmpty.classList.add('hidden');
     rawEntries.forEach(([name, qty]) => {
       const el = document.createElement('div');
-      el.className = 'fade-up flex items-center justify-between border border-[var(--blue-line)] rounded px-3 py-2';
-      el.innerHTML = `<span class="text-[var(--ink)] truncate pr-2">${name}</span><span class="text-[var(--green)] font-600">${fmt(qty)}</span>`;
+      el.className = 'fade-up flex items-center justify-between glass-card px-4 py-3';
+      el.innerHTML = `<span class="text-[var(--text-main)] truncate pr-2">${name}</span><span class="text-[var(--neon-cyan)] font-700">${fmt(qty)}</span>`;
       rawList.appendChild(el);
     });
   }
@@ -1214,17 +1246,17 @@ function renderResults(ctx){
       const pct = Math.max(6, Math.round((data.total / maxTotal) * 100));
       const itemsBreakdown = Object.entries(data.items)
         .sort((a,b)=>b[1]-a[1])
-        .map(([name, qty]) => `${name} (${fmt(qty)}×)`)
-        .join(' · ');
+        .map(([name, qty]) => `${name} <span class="text-[var(--neon-purple)]">(${fmt(qty)}x)</span>`)
+        .join(' <span class="text-[var(--text-dim)]">•</span> ');
       const block = document.createElement('div');
-      block.className = 'fade-up';
+      block.className = 'fade-up glass-card p-4';
       block.innerHTML = `
-        <div class="flex items-baseline justify-between mb-1">
-          <span class="font-display text-base font-600 text-white">${machine}</span>
-          <span class="font-mono text-[var(--amber)] font-600">${fmt(data.total)} usos</span>
+        <div class="flex items-baseline justify-between mb-2">
+          <span class="font-display text-lg font-600 text-white">${machine}</span>
+          <span class="font-mono text-[var(--neon-cyan)] font-700">${fmt(data.total)} cycles</span>
         </div>
-        <div class="machine-bar mb-2"><span style="width:${pct}%"></span></div>
-        <p class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed">${itemsBreakdown}</p>
+        <div class="machine-bar mb-3"><span style="width:${pct}%"></span></div>
+        <p class="font-mono text-xs text-[var(--text-main)] leading-relaxed">${itemsBreakdown}</p>
       `;
       machineList.appendChild(block);
     });
@@ -1236,6 +1268,8 @@ function invalidateCalculation(){
   lastCtx = null;
   document.getElementById('contractNumberInput').disabled = true;
   document.getElementById('launchContractBtn').disabled = true;
+  document.getElementById('launchContractBtn').classList.remove('btn-neon');
+  document.getElementById('launchContractBtn').classList.add('btn-ghost');
   document.getElementById('launchWarning').classList.add('hidden');
 }
 
@@ -1258,7 +1292,10 @@ document.getElementById('calcBtn').addEventListener('click', () => {
   renderResults(lastCtx);
 
   document.getElementById('contractNumberInput').disabled = false;
-  document.getElementById('launchContractBtn').disabled = false;
+  const launchBtn = document.getElementById('launchContractBtn');
+  launchBtn.disabled = false;
+  launchBtn.classList.remove('btn-ghost');
+  launchBtn.classList.add('btn-neon');
   document.getElementById('launchWarning').classList.add('hidden');
 });
 
@@ -1269,9 +1306,9 @@ function renderContractsCount(){
 }
 
 function statusBadge(status){
-  if (status === 'em_andamento') return `<span class="badge badge-yellow">Em Andamento</span>`;
-  if (status === 'concluido') return `<span class="badge badge-green">Concluído</span>`;
-  return `<span class="badge badge-gray">Cancelado</span>`;
+  if (status === 'em_andamento') return `<span class="badge badge-yellow">PROCESSING</span>`;
+  if (status === 'concluido') return `<span class="badge badge-green">COMPLETED</span>`;
+  return `<span class="badge badge-gray">ABORTED</span>`;
 }
 
 function renderContractsList(){
@@ -1288,36 +1325,48 @@ function renderContractsList(){
     const usadoTotal = contract.itens.reduce((acc, it) => acc + it.usado, 0);
 
     const card = document.createElement('div');
-    card.className = 'contract-card fade-up';
-    card.innerHTML = `
-      <div class="flex items-start justify-between gap-2 mb-2">
+    card.className = 'glass-card fade-up relative overflow-hidden';
+    if(contract.status === 'em_andamento') {
+      card.innerHTML += `<div class="absolute top-0 left-0 w-1 h-full bg-[var(--warning)]"></div>`;
+    }
+
+    card.innerHTML += `
+      <div class="flex items-start justify-between gap-2 mb-3">
         <div>
-          <div class="font-display text-base font-600 text-white">${contract.numero}</div>
-          <div class="stamp-label">${dataFormatada}</div>
+          <div class="font-display text-lg font-600 text-white leading-tight">${contract.numero}</div>
+          <div class="stamp-label mt-1 opacity-70">${dataFormatada}</div>
         </div>
         ${statusBadge(contract.status)}
       </div>
-      <div class="font-mono text-xs text-[var(--ink-dim)] mb-2">
-        ${contract.itens.length} item(ns) rastreados · ${fmt(usadoTotal)} do estoque · ${fmt(faltaTotal)} ainda a produzir/coletar
+      <div class="font-mono text-[11px] text-[var(--text-main)] mb-3 bg-[rgba(255,255,255,0.03)] p-2 rounded">
+        <span class="text-[var(--neon-purple)]">${contract.itens.length}</span> vars <span class="text-[var(--text-dim)] px-1">|</span> <span class="text-[var(--success)]">${fmt(usadoTotal)}</span> cache <span class="text-[var(--text-dim)] px-1">|</span> <span class="text-[var(--danger)]">${fmt(faltaTotal)}</span> pend.
       </div>
-      <details class="mb-2">
-        <summary class="font-mono text-xs text-[var(--amber)] cursor-pointer select-none">Ver itens</summary>
-        <div class="mt-2 space-y-1">
+      <details class="mb-4 group">
+        <summary class="font-mono text-[11px] text-[var(--neon-cyan)] cursor-pointer select-none uppercase tracking-widest hover:text-white transition-colors">>> Expandir Output</summary>
+        <div class="mt-3 space-y-1.5 pt-2 border-t border-[var(--border-panel)]">
           ${contract.itens.map(it => `
             <div class="flex items-center justify-between text-xs font-mono">
-              <span class="truncate pr-2">${it.name}</span>
-              <span class="text-[var(--ink-dim)] shrink-0">nec ${fmt(it.necessario)} · est ${fmt(it.usado)} · falta ${fmt(Math.max(0,it.falta))}</span>
+              <span class="truncate pr-2 text-[var(--text-main)]">${it.name}</span>
+              <span class="text-[var(--text-dim)] shrink-0">N:<span class="text-white">${fmt(it.necessario)}</span> E:<span class="text-[var(--success)]">${fmt(it.usado)}</span> F:<span class="text-[var(--danger)]">${fmt(Math.max(0,it.falta))}</span></span>
             </div>
           `).join('')}
         </div>
       </details>
+      
+      <button class="btn-ghost w-full py-2.5 mb-3 rounded-lg text-xs font-mono flex items-center justify-center gap-2" data-action="ver-receita" data-numero="${contract.numero}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg>
+        Renderizar Pipeline
+      </button>
+
       ${contract.status === 'em_andamento' ? `
-        <div class="flex gap-2">
-          <button class="btn-mini mini-green flex-1" data-action="concluir" data-numero="${contract.numero}">Concluir</button>
-          <button class="btn-mini mini-red flex-1" data-action="cancelar" data-numero="${contract.numero}">Cancelar (devolve estoque)</button>
+        <div class="flex gap-2 border-t border-[var(--border-panel)] pt-3">
+          <button class="btn-mini mini-green flex-1 py-2 text-[10px]" data-action="concluir" data-numero="${contract.numero}">MARCAR OK</button>
+          <button class="btn-mini mini-red flex-1 py-2 text-[10px]" data-action="cancelar" data-numero="${contract.numero}">ABORTAR (RESTORE)</button>
         </div>
       ` : `
-        <button class="btn-mini flex-1 w-full" data-action="remover" data-numero="${contract.numero}">Remover do histórico</button>
+        <div class="border-t border-[var(--border-panel)] pt-3">
+          <button class="btn-mini flex-1 w-full py-2 text-[10px]" data-action="remover" data-numero="${contract.numero}">LIMPAR LOG</button>
+        </div>
       `}
     `;
     listEl.appendChild(card);
@@ -1330,12 +1379,19 @@ function renderContractsList(){
       const contract = CONTRACTS.find(c => c.numero === numero);
       if (!contract) return;
 
-      if (action === 'concluir'){
+      if (action === 'ver-receita'){
+        if(contract.ctx) {
+          renderResults(contract.ctx);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          showConfirm('Log antigo. Contexto de pipeline indisponível.', () => {});
+        }
+      } else if (action === 'concluir'){
         contract.status = 'concluido';
         saveContracts(CONTRACTS);
         renderContractsList();
       } else if (action === 'cancelar'){
-        showConfirm(`Cancelar o contrato "${numero}"? A quantidade deduzida do estoque será devolvida.`, () => {
+        showConfirm(`Abortar processo "${numero}"? O cache de inventário será restaurado.`, () => {
           contract.itens.forEach(it => { STOCK[it.name] = (STOCK[it.name] || 0) + it.usado; });
           saveStock(STOCK);
           renderStockList(document.getElementById('stockSearch').value);
@@ -1344,7 +1400,7 @@ function renderContractsList(){
           renderContractsList();
         });
       } else if (action === 'remover'){
-        showConfirm(`Remover o contrato "${numero}" do histórico? Esta ação não pode ser desfeita.`, () => {
+        showConfirm(`Expurgar "${numero}" dos logs de sistema permanentemente?`, () => {
           CONTRACTS = CONTRACTS.filter(c => c.numero !== numero);
           saveContracts(CONTRACTS);
           renderContractsList();
@@ -1362,15 +1418,15 @@ document.getElementById('launchContractBtn').addEventListener('click', () => {
   const numero = input.value.trim();
 
   if (!lastCtx){
-    warning.textContent = 'Calcule o contrato novamente antes de lançar.';
+    warning.textContent = 'Erro: Contexto não compilado.';
     warning.classList.remove('hidden'); return;
   }
   if (!numero){
-    warning.textContent = 'Informe o número do contrato.';
+    warning.textContent = 'ID do contrato é obrigatório.';
     warning.classList.remove('hidden'); return;
   }
   if (CONTRACTS.some(c => c.numero === numero)){
-    warning.textContent = 'Já existe um contrato com esse número.';
+    warning.textContent = 'ID em conflito com log existente.';
     warning.classList.remove('hidden'); return;
   }
   warning.classList.add('hidden');
@@ -1388,6 +1444,7 @@ document.getElementById('launchContractBtn').addEventListener('click', () => {
     itens: Object.entries(lastCtx.report).map(([name, rep]) => ({
       name, necessario: rep.necessario, usado: rep.usado, falta: rep.necessario - rep.usado, tipo: rep.tipo
     })),
+    ctx: lastCtx
   };
   CONTRACTS.unshift(contract);
   saveContracts(CONTRACTS);
@@ -1402,7 +1459,7 @@ document.getElementById('launchContractBtn').addEventListener('click', () => {
 initData();
 addRow(CRAFTABLE_ITEMS[0], 1);
 renderContractsList();
-addIngredientRow(); // Deixa uma linha no form de receita
+addIngredientRow(); // Inicia com slot livre
 
 </script>
 </body>
