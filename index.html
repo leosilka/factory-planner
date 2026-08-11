@@ -115,6 +115,7 @@
   .btn-mini:hover{ color:var(--ink); }
   .btn-mini.mini-green:hover{ border-color: var(--green); color: var(--green); }
   .btn-mini.mini-red:hover{ border-color: var(--red); color: var(--red); }
+  .btn-mini.mini-amber:hover{ border-color: var(--amber); color: var(--amber); }
 
   .row-remove{
     color: var(--red);
@@ -268,7 +269,7 @@
         <h1 class="font-display text-3xl sm:text-4xl font-700 text-white tracking-wide">PAINEL DE CONTRATOS</h1>
       </div>
       <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed sm:text-right">
-        <div>REV. 05 — CADEIA E RECEITAS DINÂMICAS</div>
+        <div>REV. 06 — EDIÇÃO E REFATORAÇÃO DE ITENS</div>
         <div id="recipeCount">— receitas carregadas</div>
       </div>
     </div>
@@ -347,7 +348,7 @@
         <!-- Painel: Novas Receitas -->
         <div id="tabReceitas" class="hidden">
           <p class="stamp-label mb-1">Engenharia</p>
-          <h2 class="font-display text-xl font-600 text-white mb-4">Cadastrar Receita</h2>
+          <h2 id="recipeFormTitle" class="font-display text-xl font-600 text-white mb-4">Cadastrar Receita</h2>
 
           <label class="font-mono text-xs text-[var(--ink-dim)] block mb-1">Nome do Item Resultante</label>
           <input id="recipeNameInput" type="text" placeholder="Ex: Placa de Titânio" class="w-full rounded px-3 py-2 text-sm mb-3" />
@@ -364,17 +365,32 @@
 
           <p id="recipeWarning" class="font-mono text-xs text-[var(--red)] mb-3 hidden"></p>
 
-          <button id="saveRecipeBtn" class="btn-amber w-full py-3 rounded text-base uppercase">
-            Salvar Receita
-          </button>
+          <div class="flex gap-2">
+            <button id="cancelEditBtn" class="btn-ghost flex-1 py-3 rounded text-base hidden">Cancelar Edição</button>
+            <button id="saveRecipeBtn" class="btn-amber flex-1 py-3 rounded text-base uppercase">Salvar Receita</button>
+          </div>
 
+          <!-- Módulo de Renomeação em Massa -->
           <div class="divider-dash my-5"></div>
+          <div class="blueprint-panel corners p-4 mb-4">
+            <p class="stamp-label mb-1">Manutenção</p>
+            <h3 class="font-display text-lg font-600 text-white mb-2">Renomear Item no Sistema</h3>
+            <p class="font-mono text-[11px] text-[var(--ink-dim)] mb-3">Isso atualizará o nome no estoque e nas receitas automaticamente.</p>
+            <div class="flex flex-col sm:flex-row items-center gap-2 mb-2">
+              <input type="text" id="renameOldInput" list="allIngredientsList" placeholder="Nome atual (ex: Carvão)" class="w-full sm:flex-1 rounded px-3 py-2 text-sm" />
+              <span class="text-[var(--ink-dim)] hidden sm:block">→</span>
+              <input type="text" id="renameNewInput" placeholder="Novo nome" class="w-full sm:flex-1 rounded px-3 py-2 text-sm" />
+            </div>
+            <button id="renameItemBtn" class="btn-ghost w-full py-2 rounded text-sm font-mono mt-1">Confirmar Renomeação</button>
+            <p id="renameWarning" class="font-mono text-xs text-[var(--red)] mt-2 hidden"></p>
+            <span id="renameFlash" class="flash-msg font-mono text-xs text-[var(--green)] mt-2 block opacity-0">Item renomeado com sucesso ✓</span>
+          </div>
           
           <div class="flex items-center justify-between mb-2">
             <p class="stamp-label">Receitas Personalizadas</p>
             <span id="customRecipeCount" class="font-mono text-xs text-[var(--amber)]"></span>
           </div>
-          <div id="customRecipesList" class="space-y-2 max-h-[25vh] overflow-y-auto scroll-thin pr-1"></div>
+          <div id="customRecipesList" class="space-y-2 max-h-[30vh] overflow-y-auto scroll-thin pr-1"></div>
           <p id="customRecipesEmpty" class="font-mono text-sm text-[var(--ink-dim)]">Nenhuma receita personalizada cadastrada.</p>
         </div>
 
@@ -456,7 +472,7 @@ const DEFAULT_RECEITAS = [
   { "item": "Tijolo de Argila", "maquina": "Prensa de Moldagem", "custo": [{ "item": "Bloco de Argila", "quantidade": 2 }] },
   { "item": "Vidro", "maquina": "Forno de Fundição", "custo": [{ "item": "Areia", "quantidade": 2 }] },
   { "item": "Lingote de Bronze", "maquina": "Forno de Fundição", "custo": [{ "item": "Estanho", "quantidade": 2 }, { "item": "Cobre", "quantidade": 1 }] },
-  { "item": "Lingote de Cobre", "maquina": "Forno de Fundição", "custo": [{ "item": "Cobre", "quantidade": 2 }, , { "item": "Carvão Triturado", "quantidade": 1 }] },
+  { "item": "Lingote de Cobre", "maquina": "Forno de Fundição", "custo": [{ "item": "Cobre", "quantidade": 2 }, { "item": "Carvão Triturado", "quantidade": 1 }] },
   { "item": "Lingote de Ferro", "maquina": "Forno de Fundição", "custo": [{ "item": "Ferro", "quantidade": 2 }] },
   { "item": "Lingote de Aço", "maquina": "Forno de Fundição", "custo": [{ "item": "Ferro de Alta Qualidade", "quantidade": 2 }, { "item": "Carvão Triturado", "quantidade": 1 }] },
   { "item": "Chapa Bimetálica", "maquina": "Estação de Fabricação", "custo": [{ "item": "Lingote de Cobre", "quantidade": 1 }, { "item": "Lingote de Ferro", "quantidade": 1 }] },
@@ -502,8 +518,14 @@ let CRAFTABLE_ITEMS = [];
 let RAW_ITEMS = [];
 let STAGE_MAP = {};
 
+let editingRecipeIndex = -1; // -1 significa criando nova, >=0 significa editando
+
 function initData() {
-  ALL_RECEITAS = [...DEFAULT_RECEITAS, ...CUSTOM_RECIPES];
+  // Mescla receitas base e personalizadas (personalizada sobrepõe base com mesmo nome)
+  const baseMap = {};
+  DEFAULT_RECEITAS.forEach(r => { baseMap[r.item.toLowerCase()] = r; });
+  CUSTOM_RECIPES.forEach(r => { baseMap[r.item.toLowerCase()] = r; });
+  ALL_RECEITAS = Object.values(baseMap);
   
   RECIPE_MAP = {};
   ALL_RECEITAS.forEach(r => { RECIPE_MAP[r.item] = r; });
@@ -538,10 +560,10 @@ function updateContractSelects() {
   selects.forEach(sel => {
     const currentVal = sel.value;
     sel.innerHTML = optionsHtml(currentVal);
-    // Tenta manter a seleção, ou pega o primeiro se o item sumiu
+    // Tenta manter a seleção
     if (CRAFTABLE_ITEMS.includes(currentVal)) {
       sel.value = currentVal;
-    } else {
+    } else if (CRAFTABLE_ITEMS.length > 0) {
       sel.value = CRAFTABLE_ITEMS[0];
     }
   });
@@ -601,7 +623,7 @@ function saveContracts(list){
   try{ localStorage.setItem(CONTRACTS_KEY, JSON.stringify(list)); }catch(e){}
 }
 
-/* ---------- Modal de confirmação e UI Helpers ---------- */
+/* ---------- UI Helpers ---------- */
 function showConfirm(message, onConfirm){
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -631,6 +653,92 @@ function flashMsg(elId, text){
   clearTimeout(flashTimeouts[elId]);
   flashTimeouts[elId] = setTimeout(() => { el.style.opacity = '0'; }, 1600);
 }
+
+/* ---------- Motor de Renomeação Global ---------- */
+function renameItemGlobally(oldName, newName) {
+  if (!oldName || !newName || oldName === newName) return;
+
+  // 1. Clona as receitas padrão afetadas (que usam oldName) para as Personalizadas
+  // Isso evita quebrar a árvore base se um item padrão for renomeado.
+  DEFAULT_RECEITAS.forEach(defRecipe => {
+    // Se a receita já foi sobrescrita na custom, pula
+    if (CUSTOM_RECIPES.some(cr => cr.item.toLowerCase() === defRecipe.item.toLowerCase())) return; 
+    
+    const needsClone = (defRecipe.item.toLowerCase() === oldName.toLowerCase()) || 
+                       defRecipe.custo.some(c => c.item.toLowerCase() === oldName.toLowerCase());
+    if (needsClone) {
+      const cloned = JSON.parse(JSON.stringify(defRecipe));
+      CUSTOM_RECIPES.push(cloned);
+    }
+  });
+
+  // 2. Aplica a renomeação em todas as Receitas Personalizadas
+  let modifiedRecipes = false;
+  CUSTOM_RECIPES.forEach(r => {
+    if (r.item.toLowerCase() === oldName.toLowerCase()) {
+      r.item = newName;
+      modifiedRecipes = true;
+    }
+    r.custo.forEach(c => {
+      if (c.item.toLowerCase() === oldName.toLowerCase()) {
+        c.item = newName;
+        modifiedRecipes = true;
+      }
+    });
+  });
+  if (modifiedRecipes) saveCustomRecipes(CUSTOM_RECIPES);
+
+  // 3. Atualiza no Estoque
+  const stockKeys = Object.keys(STOCK);
+  const oldKey = stockKeys.find(k => k.toLowerCase() === oldName.toLowerCase());
+  if (oldKey) {
+    STOCK[newName] = (STOCK[newName] || 0) + STOCK[oldKey];
+    delete STOCK[oldKey];
+    saveStock(STOCK);
+  }
+
+  // 4. Atualiza na lista de Itens Personalizados
+  const customIdx = CUSTOM_ITEMS.findIndex(i => i.toLowerCase() === oldName.toLowerCase());
+  if (customIdx > -1) {
+    CUSTOM_ITEMS[customIdx] = newName;
+    saveCustomItems(CUSTOM_ITEMS);
+  }
+
+  initData();
+  invalidateCalculation();
+  if(document.getElementById('stockSearch')) renderStockList(document.getElementById('stockSearch').value);
+}
+
+document.getElementById('renameItemBtn').addEventListener('click', () => {
+  const warning = document.getElementById('renameWarning');
+  const oldName = document.getElementById('renameOldInput').value.trim();
+  const newName = document.getElementById('renameNewInput').value.trim();
+
+  if (!oldName || !newName) {
+    warning.textContent = 'Preencha os dois campos.';
+    warning.classList.remove('hidden'); return;
+  }
+  
+  const allKnown = getAllStockItems();
+  const oldReal = allKnown.find(i => i.toLowerCase() === oldName.toLowerCase());
+  
+  if (!oldReal) {
+    warning.textContent = 'O item atual não foi encontrado no sistema.';
+    warning.classList.remove('hidden'); return;
+  }
+  
+  if (allKnown.some(i => i.toLowerCase() === newName.toLowerCase() && i.toLowerCase() !== oldReal.toLowerCase())) {
+    warning.textContent = 'O novo nome já existe no sistema.';
+    warning.classList.remove('hidden'); return;
+  }
+
+  warning.classList.add('hidden');
+  renameItemGlobally(oldReal, newName);
+  
+  document.getElementById('renameOldInput').value = '';
+  document.getElementById('renameNewInput').value = '';
+  flashMsg('renameFlash', 'Item renomeado com sucesso ✓');
+});
 
 /* ---------- Resolução do Cálculo ---------- */
 function resolveItem(itemName, quantity, ctx, depth){
@@ -739,7 +847,6 @@ function renderStockList(filterText){
     const row = document.createElement('div');
     row.className = 'flex items-center justify-between gap-2 py-1';
     
-    // Tagging logic: Fabricado priority if it has a recipe
     const isRecipe = !!RECIPE_MAP[name];
     const isCustomRaw = !isRecipe && CUSTOM_ITEMS.includes(name);
     const tag = isRecipe ? '· fabricado' : (isCustomRaw ? '· personalizado' : '· bruto');
@@ -816,22 +923,35 @@ document.getElementById('clearStockBtn').addEventListener('click', () => {
 });
 
 
-/* ---------- UI: Receitas (Nova Aba) ---------- */
+/* ---------- UI: Receitas ---------- */
 const recipeIngredientsEl = document.getElementById('recipeIngredients');
 
-function addIngredientRow() {
+function addIngredientRow(defaultName = '', defaultQty = 1) {
   const wrap = document.createElement('div');
   wrap.className = 'flex items-center gap-2 fade-up recipe-ingredient-row';
   wrap.innerHTML = `
-    <input type="text" list="allIngredientsList" placeholder="Ex: Cobre" class="ing-name flex-1 min-w-0 rounded px-2 py-2 text-sm" />
-    <input type="number" min="1" value="1" placeholder="Qtd" class="ing-qty w-20 rounded px-2 py-2 text-sm text-right" />
+    <input type="text" list="allIngredientsList" placeholder="Ex: Cobre" class="ing-name flex-1 min-w-0 rounded px-2 py-2 text-sm" value="${defaultName}" />
+    <input type="number" min="1" placeholder="Qtd" class="ing-qty w-20 rounded px-2 py-2 text-sm text-right" value="${defaultQty}" />
     <button class="row-remove px-2 py-2 text-lg leading-none" title="Remover ingrediente">✕</button>
   `;
   wrap.querySelector('.row-remove').addEventListener('click', () => wrap.remove());
   recipeIngredientsEl.appendChild(wrap);
 }
 
-document.getElementById('addIngredientBtn').addEventListener('click', addIngredientRow);
+document.getElementById('addIngredientBtn').addEventListener('click', () => addIngredientRow());
+
+function cancelEdit() {
+  editingRecipeIndex = -1;
+  document.getElementById('recipeFormTitle').textContent = 'Cadastrar Receita';
+  document.getElementById('recipeNameInput').value = '';
+  document.getElementById('recipeMachineInput').value = '';
+  recipeIngredientsEl.innerHTML = '';
+  addIngredientRow();
+  document.getElementById('saveRecipeBtn').textContent = 'Salvar Receita';
+  document.getElementById('cancelEditBtn').classList.add('hidden');
+  document.getElementById('recipeWarning').classList.add('hidden');
+}
+document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
 
 document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   const warning = document.getElementById('recipeWarning');
@@ -843,10 +963,13 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
     warning.classList.remove('hidden'); return;
   }
 
-  // Verifica duplicidade no nome
-  if(ALL_RECEITAS.some(r => r.item.toLowerCase() === name.toLowerCase())) {
-    warning.textContent = 'Já existe uma receita para este item.';
-    warning.classList.remove('hidden'); return;
+  // Verifica duplicidade se NÃO for uma edição do mesmo item
+  const exists = ALL_RECEITAS.some(r => r.item.toLowerCase() === name.toLowerCase());
+  if(exists) {
+    if (editingRecipeIndex === -1 || CUSTOM_RECIPES[editingRecipeIndex].item.toLowerCase() !== name.toLowerCase()) {
+      warning.textContent = 'Já existe uma receita para este item (edite ou apague a existente primeiro).';
+      warning.classList.remove('hidden'); return;
+    }
   }
 
   const ingRows = [...document.querySelectorAll('#recipeIngredients .recipe-ingredient-row')];
@@ -866,17 +989,21 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   }
 
   warning.classList.add('hidden');
+  const newRecipe = { item: name, maquina: machine, custo };
 
-  // Adiciona a receita e re-inicializa os dados
-  CUSTOM_RECIPES.push({ item: name, maquina: machine, custo });
+  if (editingRecipeIndex > -1) {
+    const oldName = CUSTOM_RECIPES[editingRecipeIndex].item;
+    if (oldName.toLowerCase() !== name.toLowerCase()) {
+      // O usuário editou o NOME do item de saída. Devemos refatorar a árvore!
+      renameItemGlobally(oldName, name);
+    }
+    CUSTOM_RECIPES[editingRecipeIndex] = newRecipe;
+  } else {
+    CUSTOM_RECIPES.push(newRecipe);
+  }
+
   saveCustomRecipes(CUSTOM_RECIPES);
-  
-  // Limpa o form
-  document.getElementById('recipeNameInput').value = '';
-  document.getElementById('recipeMachineInput').value = '';
-  recipeIngredientsEl.innerHTML = '';
-  addIngredientRow(); // Deixa uma linha em branco preparada
-  
+  cancelEdit();
   initData();
   invalidateCalculation();
   flashMsg('customRecipeCount', 'Receita Salva!');
@@ -904,14 +1031,37 @@ function renderCustomRecipesList() {
     const ingredientsHtml = recipe.custo.map(c => `${c.quantidade}x ${c.item}`).join(' + ');
     
     card.innerHTML = `
-      <div>
+      <div class="flex-1 pr-2">
         <div class="font-display text-white text-base">${recipe.item}</div>
         <div class="stamp-label mb-1">${recipe.maquina}</div>
-        <div class="font-mono text-xs text-[var(--ink-dim)]">${ingredientsHtml}</div>
+        <div class="font-mono text-xs text-[var(--ink-dim)] leading-relaxed">${ingredientsHtml}</div>
       </div>
-      <button class="row-remove px-2 py-1 text-lg leading-none" data-del-recipe="${index}" title="Excluir receita">✕</button>
+      <div class="flex flex-col gap-1 shrink-0">
+        <button class="btn-mini mini-amber px-2 py-1" data-edit-recipe="${index}" title="Editar Receita">Editar</button>
+        <button class="btn-mini mini-red px-2 py-1" data-del-recipe="${index}" title="Excluir Receita">Excluir</button>
+      </div>
     `;
     listEl.appendChild(card);
+  });
+
+  listEl.querySelectorAll('[data-edit-recipe]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.editRecipe;
+      const recipe = CUSTOM_RECIPES[idx];
+      editingRecipeIndex = parseInt(idx, 10);
+      
+      document.getElementById('recipeFormTitle').textContent = 'Editar Receita';
+      document.getElementById('recipeNameInput').value = recipe.item;
+      document.getElementById('recipeMachineInput').value = recipe.maquina;
+      
+      recipeIngredientsEl.innerHTML = '';
+      recipe.custo.forEach(c => addIngredientRow(c.item, c.quantidade));
+      
+      document.getElementById('saveRecipeBtn').textContent = 'Salvar Alterações';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+      document.getElementById('tabReceitasBtn').click(); // foca na tab caso precise
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   });
 
   listEl.querySelectorAll('[data-del-recipe]').forEach(btn => {
