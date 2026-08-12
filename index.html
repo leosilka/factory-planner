@@ -430,11 +430,12 @@
           </div>
           
           <div class="flex items-center justify-between mb-3 mt-6">
-            <p class="stamp-label">Scripts Personalizados</p>
+            <p class="stamp-label">Catálogo de Receitas</p>
             <span id="customRecipeCount" class="font-mono text-xs text-[var(--neon-cyan)]"></span>
           </div>
-          <div id="customRecipesList" class="space-y-3 max-h-[30vh] overflow-y-auto scroll-thin pr-2"></div>
-          <p id="customRecipesEmpty" class="font-mono text-sm text-[var(--text-dim)]">Nenhuma receita injetada.</p>
+          <input id="recipeCatalogSearch" type="text" placeholder="Buscar por item ou máquina..." class="w-full rounded-lg px-3 py-2.5 text-sm mb-3" />
+          <div id="customRecipesList" class="space-y-3 max-h-[40vh] overflow-y-auto scroll-thin pr-2"></div>
+          <p id="customRecipesEmpty" class="font-mono text-sm text-[var(--text-dim)]">Nenhuma receita encontrada.</p>
         </div>
 
         <!-- Painel: Contratos lançados -->
@@ -561,7 +562,8 @@ let CRAFTABLE_ITEMS = [];
 let RAW_ITEMS = [];
 let STAGE_MAP = {};
 
-let editingRecipeIndex = -1; // -1 significa criando nova, >=0 significa editando
+let editingRecipeIndex = -1; // -1 significa criando nova, >=0 significa editando uma customizada existente
+let editingBaseOverrideName = null; // quando != null, estamos sobrescrevendo uma receita padrão (não customizada ainda)
 
 function initData() {
   const baseMap = {};
@@ -584,7 +586,8 @@ function initData() {
 
   updateDatalist();
   updateContractSelects();
-  renderCustomRecipesList();
+  const recipeSearchVal = document.getElementById('recipeCatalogSearch') ? document.getElementById('recipeCatalogSearch').value : '';
+  renderCustomRecipesList(recipeSearchVal);
   
   const searchVal = document.getElementById('stockSearch') ? document.getElementById('stockSearch').value : '';
   if(document.getElementById('stockList')) renderStockList(searchVal);
@@ -976,6 +979,7 @@ document.getElementById('addIngredientBtn').addEventListener('click', () => addI
 
 function cancelEdit() {
   editingRecipeIndex = -1;
+  editingBaseOverrideName = null;
   document.getElementById('recipeFormTitle').textContent = 'Programar Nova Peça';
   document.getElementById('recipeNameInput').value = '';
   document.getElementById('recipeMachineInput').value = '';
@@ -997,12 +1001,16 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
     warning.classList.remove('hidden'); return;
   }
 
+  const isEditingCustom = editingRecipeIndex > -1;
+  const isBaseOverride = editingRecipeIndex === -1 && editingBaseOverrideName !== null;
+
   const exists = ALL_RECEITAS.some(r => r.item.toLowerCase() === name.toLowerCase());
-  if(exists) {
-    if (editingRecipeIndex === -1 || CUSTOM_RECIPES[editingRecipeIndex].item.toLowerCase() !== name.toLowerCase()) {
-      warning.textContent = 'Conflito de script: já existe um arquivo com esse nome final.';
-      warning.classList.remove('hidden'); return;
-    }
+  const isSelfEdit = isEditingCustom && CUSTOM_RECIPES[editingRecipeIndex].item.toLowerCase() === name.toLowerCase();
+  const isSelfOverride = isBaseOverride && editingBaseOverrideName.toLowerCase() === name.toLowerCase();
+
+  if (exists && !isSelfEdit && !isSelfOverride) {
+    warning.textContent = 'Conflito de script: já existe um arquivo com esse nome final.';
+    warning.classList.remove('hidden'); return;
   }
 
   const ingRows = [...document.querySelectorAll('#recipeIngredients .recipe-ingredient-row')];
@@ -1024,13 +1032,23 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   warning.classList.add('hidden');
   const newRecipe = { item: name, maquina: machine, custo };
 
-  if (editingRecipeIndex > -1) {
+  if (isEditingCustom) {
+    // Editando uma receita que já era customizada
     const oldName = CUSTOM_RECIPES[editingRecipeIndex].item;
     if (oldName.toLowerCase() !== name.toLowerCase()) {
-      renameItemGlobally(oldName, name);
+      renameItemGlobally(oldName, name); // pode reindexar/anexar itens em CUSTOM_RECIPES, mas nunca remove os anteriores
     }
     CUSTOM_RECIPES[editingRecipeIndex] = newRecipe;
+  } else if (isBaseOverride) {
+    // Sobrescrevendo uma receita padrão (ainda não existia em CUSTOM_RECIPES antes deste save)
+    if (editingBaseOverrideName.toLowerCase() !== name.toLowerCase()) {
+      renameItemGlobally(editingBaseOverrideName, name); // clona a receita padrão e renomeia as referências
+    }
+    const clonedIdx = CUSTOM_RECIPES.findIndex(r => r.item.toLowerCase() === name.toLowerCase());
+    if (clonedIdx > -1) CUSTOM_RECIPES[clonedIdx] = newRecipe;
+    else CUSTOM_RECIPES.push(newRecipe);
   } else {
+    // Receita nova, do zero
     CUSTOM_RECIPES.push(newRecipe);
   }
 
@@ -1041,54 +1059,78 @@ document.getElementById('saveRecipeBtn').addEventListener('click', () => {
   flashMsg('customRecipeCount', 'Script injetado!');
 });
 
-function renderCustomRecipesList() {
+function renderCustomRecipesList(filterText) {
   const listEl = document.getElementById('customRecipesList');
   const emptyEl = document.getElementById('customRecipesEmpty');
   const countEl = document.getElementById('customRecipeCount');
-  
+
+  const filter = (filterText || '').trim().toLowerCase();
+  const items = [...ALL_RECEITAS]
+    .filter(r => r.item.toLowerCase().includes(filter) || r.maquina.toLowerCase().includes(filter))
+    .sort((a,b) => a.item.localeCompare(b.item, 'pt-BR'));
+
   listEl.innerHTML = '';
-  if (CUSTOM_RECIPES.length === 0){
+
+  const totalCustom = CUSTOM_RECIPES.length;
+  countEl.textContent = `${ALL_RECEITAS.length} no total · ${totalCustom} customizada${totalCustom !== 1 ? 's' : ''}`;
+
+  if (items.length === 0){
     emptyEl.classList.remove('hidden');
-    countEl.textContent = '';
     return;
   }
-  
   emptyEl.classList.add('hidden');
-  countEl.textContent = `(${CUSTOM_RECIPES.length})`;
 
-  CUSTOM_RECIPES.forEach((recipe, index) => {
+  items.forEach(recipe => {
+    const customIndex = CUSTOM_RECIPES.findIndex(r => r.item.toLowerCase() === recipe.item.toLowerCase());
+    const isCustom = customIndex > -1;
+
     const card = document.createElement('div');
     card.className = 'glass-card fade-up flex justify-between items-start';
-    
+
     const ingredientsHtml = recipe.custo.map(c => `<span class="text-[var(--neon-cyan)]">${c.quantidade}x</span> ${c.item}`).join(' <span class="text-[var(--text-dim)]">+</span> ');
-    
+
     card.innerHTML = `
       <div class="flex-1 pr-3">
-        <div class="font-display text-white text-lg font-600">${recipe.item}</div>
+        <div class="flex items-center gap-2 mb-1">
+          <div class="font-display text-white text-lg font-600">${recipe.item}</div>
+          <span class="stamp-label opacity-70">${isCustom ? '· customizada' : '· padrão'}</span>
+        </div>
         <div class="stamp-label mb-2">${recipe.maquina}</div>
         <div class="font-mono text-xs text-[var(--text-main)] leading-relaxed">${ingredientsHtml}</div>
       </div>
       <div class="flex flex-col gap-2 shrink-0">
-        <button class="btn-mini mini-amber px-2 py-1.5" data-edit-recipe="${index}" title="Modificar">EDIT</button>
-        <button class="btn-mini mini-red px-2 py-1.5" data-del-recipe="${index}" title="Excluir">DEL</button>
+        <button class="btn-mini mini-amber px-2 py-1.5" data-edit-item="${recipe.item}" title="Modificar">EDIT</button>
+        ${isCustom ? `<button class="btn-mini mini-red px-2 py-1.5" data-del-recipe="${customIndex}" title="Excluir (volta a ser padrão, se existir)">DEL</button>` : ''}
       </div>
     `;
     listEl.appendChild(card);
   });
 
-  listEl.querySelectorAll('[data-edit-recipe]').forEach(btn => {
+  listEl.querySelectorAll('[data-edit-item]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = btn.dataset.editRecipe;
-      const recipe = CUSTOM_RECIPES[idx];
-      editingRecipeIndex = parseInt(idx, 10);
-      
-      document.getElementById('recipeFormTitle').textContent = 'Modificar Script';
+      const itemName = btn.dataset.editItem;
+      const recipe = ALL_RECEITAS.find(r => r.item.toLowerCase() === itemName.toLowerCase());
+      if (!recipe) return;
+      const customIdx = CUSTOM_RECIPES.findIndex(r => r.item.toLowerCase() === itemName.toLowerCase());
+
+      if (customIdx > -1){
+        // já é uma receita customizada: edição normal
+        editingRecipeIndex = customIdx;
+        editingBaseOverrideName = null;
+        document.getElementById('recipeFormTitle').textContent = 'Modificar Script';
+      } else {
+        // é uma receita padrão ainda intocada: ao salvar, ela vira uma sobrescrita customizada
+        editingRecipeIndex = -1;
+        editingBaseOverrideName = recipe.item;
+        document.getElementById('recipeFormTitle').textContent = 'Sobrescrever Receita Padrão';
+      }
+
       document.getElementById('recipeNameInput').value = recipe.item;
       document.getElementById('recipeMachineInput').value = recipe.maquina;
-      
+
       recipeIngredientsEl.innerHTML = '';
       recipe.custo.forEach(c => addIngredientRow(c.item, c.quantidade));
-      
+
       document.getElementById('saveRecipeBtn').textContent = 'Atualizar';
       document.getElementById('cancelEditBtn').classList.remove('hidden');
       document.getElementById('tabReceitasBtn').click();
@@ -1100,7 +1142,11 @@ function renderCustomRecipesList() {
     btn.addEventListener('click', () => {
       const idx = btn.dataset.delRecipe;
       const rName = CUSTOM_RECIPES[idx].item;
-      showConfirm(`Excluir o script de "${rName}" permanentemente?`, () => {
+      const temVersaoPadrao = DEFAULT_RECEITAS.some(r => r.item.toLowerCase() === rName.toLowerCase());
+      const msg = temVersaoPadrao
+        ? `Remover a customização de "${rName}"? A receita padrão original volta a valer.`
+        : `Excluir o script de "${rName}" permanentemente?`;
+      showConfirm(msg, () => {
         CUSTOM_RECIPES.splice(idx, 1);
         saveCustomRecipes(CUSTOM_RECIPES);
         initData();
@@ -1109,6 +1155,10 @@ function renderCustomRecipesList() {
     });
   });
 }
+
+document.getElementById('recipeCatalogSearch').addEventListener('input', (e) => {
+  renderCustomRecipesList(e.target.value);
+});
 
 
 /* ---------- Renderização de Resultados ---------- */
