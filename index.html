@@ -452,6 +452,18 @@
     <!-- Results -->
     <section class="lg:col-span-3 space-y-6">
 
+      <!-- Produção Consolidada entre Contratos Ativos -->
+      <div class="glass-panel p-6 border border-[var(--neon-purple)] shadow-[0_0_15px_rgba(192,132,252,0.1)]">
+        <div class="flex items-center justify-between mb-1">
+          <p class="stamp-label">Visão Macro · Multi-Contrato</p>
+          <span id="consolidatedContractCount" class="font-mono text-xs text-[var(--neon-purple)]"></span>
+        </div>
+        <h2 class="font-display text-2xl font-600 text-white mb-1">Produção em Lote</h2>
+        <p class="font-mono text-xs text-[var(--text-dim)] mb-5">Itens que mais de um contrato em andamento precisa — produza de uma vez só pra atender todos.</p>
+        <div id="consolidatedList" class="space-y-3"></div>
+        <p id="consolidatedEmpty" class="font-mono text-sm text-[var(--text-dim)]"></p>
+      </div>
+
       <!-- Report table -->
       <div class="glass-panel p-6">
         <p class="stamp-label mb-1">Módulo A</p>
@@ -1460,6 +1472,75 @@ function renderContractsList(){
   });
 
   renderContractsCount();
+  renderConsolidatedProduction();
+}
+
+/* ---------- Produção em Lote (itens compartilhados entre contratos ativos) ----------
+   Cada contrato guarda em .itens o "falta" já líquido de estoque calculado no momento
+   do lançamento (todos os níveis da árvore: matéria-prima e itens fabricados). Aqui só
+   agrupamos isso entre os contratos "em_andamento" pra achar o que se repete. */
+function renderConsolidatedProduction(){
+  const listEl = document.getElementById('consolidatedList');
+  const emptyEl = document.getElementById('consolidatedEmpty');
+  const countEl = document.getElementById('consolidatedContractCount');
+
+  const active = CONTRACTS.filter(c => c.status === 'em_andamento');
+  countEl.textContent = `${active.length} contrato${active.length !== 1 ? 's' : ''} ativo${active.length !== 1 ? 's' : ''}`;
+
+  listEl.innerHTML = '';
+
+  if (active.length < 2){
+    emptyEl.textContent = 'Lance pelo menos 2 contratos em andamento para detectar itens em comum.';
+    emptyEl.classList.remove('hidden');
+    return;
+  }
+
+  const map = {}; // nome -> { tipo, totalFalta, porContrato: [{numero, falta}] }
+  active.forEach(contract => {
+    contract.itens.forEach(it => {
+      const falta = Math.max(0, it.falta);
+      if (falta <= 0) return;
+      if (!map[it.name]) map[it.name] = { tipo: it.tipo, totalFalta: 0, porContrato: [] };
+      map[it.name].totalFalta += falta;
+      map[it.name].porContrato.push({ numero: contract.numero, falta });
+    });
+  });
+
+  const shared = Object.entries(map)
+    .filter(([, v]) => v.porContrato.length > 1)
+    .sort((a,b) => b[1].porContrato.length - a[1].porContrato.length || b[1].totalFalta - a[1].totalFalta);
+
+  if (shared.length === 0){
+    emptyEl.textContent = 'Nenhum item em comum entre os contratos ativos no momento — cada um pede peças diferentes.';
+    emptyEl.classList.remove('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+
+  shared.forEach(([name, data]) => {
+    const recipe = RECIPE_MAP[name];
+    const machineTag = recipe ? recipe.maquina : 'Coleta / Extração';
+
+    const chips = data.porContrato
+      .sort((a,b) => b.falta - a.falta)
+      .map(pc => `<span class="font-mono text-[10px] px-2 py-1 rounded bg-[rgba(192,132,252,0.1)] border border-[rgba(192,132,252,0.3)] text-[var(--neon-purple)]">${pc.numero}: ${fmt(pc.falta)}</span>`)
+      .join(' ');
+
+    const card = document.createElement('div');
+    card.className = 'glass-card fade-up';
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <div class="flex items-center gap-2">
+          <span class="font-display text-white text-base font-600">${name}</span>
+          <span class="badge badge-yellow">${data.porContrato.length}x contratos</span>
+        </div>
+        <span class="font-mono text-[var(--neon-cyan)] font-700 shrink-0">produzir ${fmt(data.totalFalta)}</span>
+      </div>
+      <div class="stamp-label mb-2">${machineTag}</div>
+      <div class="flex flex-wrap gap-1.5">${chips}</div>
+    `;
+    listEl.appendChild(card);
+  });
 }
 
 document.getElementById('launchContractBtn').addEventListener('click', () => {
